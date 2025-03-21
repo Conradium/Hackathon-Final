@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import NavBar from "@/components/NavBar"
 import Footer from "@/components/Footer"
 import ChatInterface from "@/components/ChatInterface"
-import UserLocationMap from "@/components/UserLocationMap"
+import DirectionIndicator from "@/components/DirectionIndicator"
 import LocationDropdown, { type Landmark } from "@/components/LocationDropdown"
 import { fetchAndParseCSV, convertToLandmarks } from "@/utils/csv-parser"
 import { Loader } from "lucide-react"
@@ -78,6 +78,7 @@ const ChatbotPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
+  const [nearestPOI, setNearestPOI] = useState<Landmark | null>(null)
 
   // Fetch landmarks data from CSV
   useEffect(() => {
@@ -125,21 +126,74 @@ const ChatbotPage = () => {
         },
         (error) => {
           console.error("Error getting location:", error)
-          // We'll handle the error in the UserLocationMap component
+          // We'll handle the error in the DirectionIndicator component
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
       )
     }
   }, [])
 
-  // Handle CSV upload
-  const handleCsvUpload = (newLandmarks: Landmark[]) => {
-    setLandmarks(newLandmarks)
+  // Find nearest POI when user location or landmarks change
+  useEffect(() => {
+    if (currentLocation && landmarks.length > 0) {
+      const nearest = findNearestLandmark(currentLocation, landmarks)
+      setNearestPOI(nearest)
+
+      // If we couldn't find a nearest landmark, use the first one as fallback
+      if (!nearest && landmarks.length > 0) {
+        setNearestPOI(landmarks[0])
+      }
+    } else if (landmarks.length > 0) {
+      // If no location but we have landmarks, use the first one
+      setNearestPOI(landmarks[0])
+    }
+  }, [currentLocation, landmarks])
+
+  // Helper function to find the nearest landmark
+  const findNearestLandmark = (userLocation: GeolocationCoordinates, landmarks: Landmark[]): Landmark | null => {
+    if (!userLocation || landmarks.length === 0) return null
+
+    let nearestLandmark: Landmark | null = null
+    let shortestDistance = Number.POSITIVE_INFINITY
+
+    landmarks.forEach((landmark) => {
+      const landmarkLat = Number.parseFloat(landmark.latitude)
+      const landmarkLng = Number.parseFloat(landmark.longitude)
+
+      if (isNaN(landmarkLat) || isNaN(landmarkLng)) return
+
+      // Calculate distance using Haversine formula
+      const R = 6371e3 // Earth radius in meters
+      const φ1 = (userLocation.latitude * Math.PI) / 180
+      const φ2 = (landmarkLat * Math.PI) / 180
+      const Δφ = ((landmarkLat - userLocation.latitude) * Math.PI) / 180
+      const Δλ = ((landmarkLng - userLocation.longitude) * Math.PI) / 180
+
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      const distance = R * c
+
+      if (distance < shortestDistance) {
+        shortestDistance = distance
+        nearestLandmark = landmark
+      }
+    })
+
+    return nearestLandmark
   }
 
   // Handle location selection
   const handleLocationSelect = (locationName: string) => {
     setSelectedLocation(locationName)
+
+    // Find the selected landmark
+    const selected = landmarks.find(
+      (landmark) => landmark.place_name_en === locationName || landmark.place_name_jp === locationName,
+    )
+
+    if (selected) {
+      setNearestPOI(selected)
+    }
   }
 
   return (
@@ -157,9 +211,8 @@ const ChatbotPage = () => {
           </div>
 
           <div className="flex justify-center flex-col">
-            {/* Google Map showing user's location */}
-            <UserLocationMap apiKey={GOOGLE_MAPS_API_KEY} height="400px" />
-
+            {/* Direction Indicator */}
+            <DirectionIndicator userLocation={currentLocation} nearestPOI={nearestPOI} />
 
             {/* Location dropdown */}
             <div className="mb-4">
@@ -188,7 +241,7 @@ const ChatbotPage = () => {
               travelApiEndpoint={TRAVEL_API_ENDPOINT}
               userLocation={currentLocation}
               landmarks={landmarks}
-              onSelectLocation={setSelectedLocation}
+              onSelectLocation={handleLocationSelect}
             />
           </div>
         </div>
