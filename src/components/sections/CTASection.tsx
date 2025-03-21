@@ -14,9 +14,9 @@ const CTASection = () => {
             <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
             Get Started Today
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 scroll-reveal">Ready for a Stress-Free Travel Experience?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 scroll-reveal">Ready for an Immersive Adventure?</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-8 scroll-reveal">
-            Join thousands of travelers who have enhanced their journeys with our AI-powered assistance.
+            Join thousands of travelers who have enhanced their Katsuoji Temple experience with our AI-powered assistance.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 scroll-reveal">
             <button className="px-8 py-3 rounded-full bg-primary text-primary-foreground font-medium shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all text-base w-full sm:w-auto">

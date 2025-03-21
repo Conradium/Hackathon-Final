@@ -1,51 +1,70 @@
+"use client"
 
-import { useState, useEffect } from 'react';
-import { Menu, X, Bot } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect } from "react"
+import { Menu, X } from "lucide-react"
+import { Link } from "react-router-dom"
 
 const NavBar = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [isOpen, setIsOpen] = useState(false)
+  const [isScrolled, setIsScrolled] = useState(false)
 
   // Handle scroll event to add background to navbar
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > 10) {
-        setIsScrolled(true);
+        setIsScrolled(true)
       } else {
-        setIsScrolled(false);
+        setIsScrolled(false)
       }
-    };
+    }
 
-    window.addEventListener('scroll', handleScroll);
-    
+    window.addEventListener("scroll", handleScroll)
+
     // Cleanup
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
   return (
-    <header 
+    <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-background/80 backdrop-blur-md shadow-sm' : 'bg-transparent'
+        isScrolled ? "bg-background/80 backdrop-blur-md shadow-sm" : "bg-transparent"
       }`}
     >
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <Bot className="h-8 w-8 text-primary" />
-            <span className="text-xl font-semibold">TravelMate</span>
+            <img
+              src="/logo-placeholder.png"
+              alt="Katsuōji Mate Logo"
+              className="h-8 w-auto"
+              onError={(e) => {
+                // Fallback if image doesn't exist yet
+                e.currentTarget.src = "https://via.placeholder.com/32x32?text=Logo"
+              }}
+            />
+            <span className="text-xl font-semibold">Katsuōji Mate</span>
           </Link>
-          
+
           {/* Desktop Menu */}
           <nav className="hidden md:flex items-center space-x-8">
-            <Link to="/" className="text-foreground hover:text-primary transition-colors">Home</Link>
-            <Link to="/chatbot" className="text-foreground hover:text-primary transition-colors">Chatbot</Link>
-            <a href="#features" className="text-foreground hover:text-primary transition-colors">Features</a>
-            <a href="#about" className="text-foreground hover:text-primary transition-colors">How It Works</a>
-            <a href="#contact" className="text-foreground hover:text-primary transition-colors">Contact</a>
+            <Link to="/" className="text-foreground hover:text-primary transition-colors">
+              Home
+            </Link>
+            <Link to="/chatbot" className="text-foreground hover:text-primary transition-colors">
+              Chatbot
+            </Link>
+            <a href="#features" className="text-foreground hover:text-primary transition-colors">
+              Features
+            </a>
+            <a href="#about" className="text-foreground hover:text-primary transition-colors">
+              How It Works
+            </a>
+            <a href="#contact" className="text-foreground hover:text-primary transition-colors">
+              Contact
+            </a>
           </nav>
-          
+
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
@@ -55,39 +74,41 @@ const NavBar = () => {
           </button>
         </div>
       </div>
-      
+
       {/* Mobile Menu */}
-      <div className={`md:hidden transition-all duration-300 ${isOpen ? 'max-h-screen py-4' : 'max-h-0'} overflow-hidden bg-background/95 backdrop-blur-md`}>
+      <div
+        className={`md:hidden transition-all duration-300 ${isOpen ? "max-h-screen py-4" : "max-h-0"} overflow-hidden bg-background/95 backdrop-blur-md`}
+      >
         <div className="container mx-auto px-4 space-y-3">
-          <Link 
+          <Link
             to="/"
             className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
             onClick={() => setIsOpen(false)}
           >
             Home
           </Link>
-          <Link 
+          <Link
             to="/chatbot"
             className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
             onClick={() => setIsOpen(false)}
           >
             Chatbot
           </Link>
-          <a 
+          <a
             href="#features"
             className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
             onClick={() => setIsOpen(false)}
           >
             Features
           </a>
-          <a 
+          <a
             href="#about"
             className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
             onClick={() => setIsOpen(false)}
           >
             How It Works
           </a>
-          <a 
+          <a
             href="#contact"
             className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
             onClick={() => setIsOpen(false)}
@@ -97,7 +118,8 @@ const NavBar = () => {
         </div>
       </div>
     </header>
-  );
-};
+  )
+}
 
-export default NavBar;
+export default NavBar
+

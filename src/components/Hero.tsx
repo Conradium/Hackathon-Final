@@ -14,23 +14,18 @@ const Hero = () => {
       {/* ✅ Hero Content */}
       <div className="container mx-auto px-6 relative z-10">
         <div className="max-w-5xl mx-auto text-center">
-          {/* ✅ Animated Badge */}
-          <div className="inline-flex items-center rounded-full px-5 py-2 mb-8 bg-white/10 backdrop-blur-md text-white text-sm shadow-lg border border-white/20">
-            <span className="flex h-2 w-2 rounded-full bg-red-500 mr-2 animate-pulse"></span>
-            AI-Powered Travel Assistant
+          {/* AI Assistant Badge */}
+          <div className="inline-flex items-center rounded-full px-4 py-1 mb-6 bg-secondary text-secondary-foreground text-sm shadow-md">
+            <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
+            AI-Powered Temple Guide
           </div>
 
-          {/* ✅ Title with Gradient */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-8 tracking-tight">
-            Your Intelligent <br /> 
-            <span className="bg-clip-text text-transparent bg-gradient-to-r from-red-400 to-yellow-500">
-              Travel Companion
-            </span>
+          {/* Title & Subtitle */}
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
+            Your Intelligent <br /> Temple Companion
           </h1>
-          
-          {/* ✅ Improved Subtitle */}
-          <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-3xl mx-auto leading-relaxed">
-            Break language barriers, navigate with confidence, and solve any travel problem instantly with our AI assistant.
+          <p className="text-xl md:text-2xl text-text-muted-foreground mb-10 max-w-3xl mx-auto">
+            Break language barriers, navigate with confidence, and experience Katsuōji Temple with our AI assistant.
           </p>
 
           {/* ✅ CTA Buttons */}
