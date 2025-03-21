@@ -32,6 +32,7 @@ const AIModel = () => {
     className: string
     probability: number
   } | null>(null)
+  const [debugInfo, setDebugInfo] = useState<string>("")
 
   const webcamContainerRef = useRef<HTMLDivElement>(null)
   const labelContainerRef = useRef<HTMLDivElement>(null)
@@ -41,6 +42,15 @@ const AIModel = () => {
 
   // The URL to the hosted model
   const MODEL_URL = "https://teachablemachine.withgoogle.com/models/0MNNF3JUK/"
+
+  // Detect iOS device
+  const isIOS = () => {
+    return (
+      ["iPad Simulator", "iPhone Simulator", "iPod Simulator", "iPad", "iPhone", "iPod"].includes(navigator.platform) ||
+      // iPad on iOS 13 detection
+      (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+    )
+  }
 
   // Get available video devices
   const getVideoDevices = async () => {
@@ -55,11 +65,16 @@ const AIModel = () => {
       const videoInputs = devices.filter((device) => device.kind === "videoinput")
       setVideoDevices(videoInputs)
 
-      console.log("Available video devices:", videoInputs)
+      const deviceInfo = videoInputs
+        .map((d) => `${d.label || "Camera " + (videoInputs.indexOf(d) + 1)} (${d.deviceId.substring(0, 8)}...)`)
+        .join(", ")
+      setDebugInfo(`Found ${videoInputs.length} cameras: ${deviceInfo}`)
+
       return videoInputs
     } catch (error) {
       console.error("Error getting video devices:", error)
       setError("Unable to access camera. Please check permissions and try again.")
+      setDebugInfo(`Error getting video devices: ${error instanceof Error ? error.message : String(error)}`)
       return []
     }
   }
@@ -91,28 +106,77 @@ const AIModel = () => {
       // Setup webcam with the appropriate camera
       const flip = true // Always flip for consistency in UI
 
-      // Determine which camera to use
-      let cameraOptions = {}
+      // Create constraints for camera selection
+      let constraints: MediaTrackConstraints = {}
 
-      // If we have multiple cameras, try to select based on user preference
-      if (devices.length > 1) {
-        // On mobile, typically the first camera is the rear camera and the second is the front camera
-        // But this can vary by device, so this is a best guess
-        const deviceIndex = isFrontCamera ? 1 : 0
-        const deviceId = devices[Math.min(deviceIndex, devices.length - 1)].deviceId
-
-        cameraOptions = {
-          deviceId: { exact: deviceId },
+      // iOS specific handling
+      if (isIOS()) {
+        // On iOS, use facingMode constraint
+        constraints = {
+          facingMode: isFrontCamera ? "user" : "environment",
         }
-      } else {
-        // If we only have one camera or couldn't detect cameras, use default
-        cameraOptions = { facingMode: isFrontCamera ? "user" : "environment" }
+
+        setDebugInfo(`Using iOS camera selection with facingMode: ${isFrontCamera ? "user" : "environment"}`)
+      }
+      // For other devices with multiple cameras
+      else if (devices.length > 1) {
+        // Try to select based on user preference
+        // On most devices, the first camera is the rear camera and the second is the front camera
+        const deviceIndex = isFrontCamera ? Math.min(1, devices.length - 1) : 0
+        const device = devices[deviceIndex]
+
+        constraints = {
+          deviceId: { exact: device.deviceId },
+        }
+
+        setDebugInfo(
+          `Using deviceId selection: ${device.label || "Camera " + (deviceIndex + 1)} (${device.deviceId.substring(0, 8)}...)`,
+        )
+      }
+      // Fallback for single camera devices
+      else {
+        // If we only have one camera, use it
+        if (devices.length === 1) {
+          constraints = {
+            deviceId: { exact: devices[0].deviceId },
+          }
+          setDebugInfo(`Using single available camera: ${devices[0].label || "Camera 1"}`)
+        } else {
+          // Last resort fallback
+          constraints = {
+            facingMode: isFrontCamera ? "user" : "environment",
+          }
+          setDebugInfo(`Using fallback facingMode: ${isFrontCamera ? "user" : "environment"}`)
+        }
       }
 
-      // Initialize webcam with selected camera
-      webcamRef.current = new window.tmImage.Webcam(300, 300, flip, cameraOptions)
-      await webcamRef.current.setup()
-      await webcamRef.current.play()
+      // Initialize webcam with selected camera constraints
+      try {
+        webcamRef.current = new window.tmImage.Webcam(300, 300, flip)
+        await webcamRef.current.setup(constraints) // Pass constraints here
+        await webcamRef.current.play()
+
+        setDebugInfo((prev) => `${prev}\nCamera initialized successfully`)
+      } catch (cameraError) {
+        console.error("Camera setup error:", cameraError)
+        setDebugInfo(
+          (prev) =>
+            `${prev}\nCamera setup error: ${cameraError instanceof Error ? cameraError.message : String(cameraError)}`,
+        )
+
+        // Try again with simpler constraints as fallback
+        try {
+          setDebugInfo((prev) => `${prev}\nTrying fallback camera initialization...`)
+          webcamRef.current = new window.tmImage.Webcam(300, 300, flip)
+          await webcamRef.current.setup({ facingMode: isFrontCamera ? "user" : "environment" })
+          await webcamRef.current.play()
+          setDebugInfo((prev) => `${prev}\nFallback camera initialized successfully`)
+        } catch (fallbackError) {
+          throw new Error(
+            `Failed to initialize camera: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`,
+          )
+        }
+      }
 
       // Start the animation loop
       requestRef.current = window.requestAnimationFrame(loop)
@@ -135,6 +199,66 @@ const AIModel = () => {
     } catch (error) {
       console.error("Error initializing model:", error)
       setError(error instanceof Error ? error.message : "Failed to initialize model")
+      setDebugInfo((prev) => `${prev}\nInitialization error: ${error instanceof Error ? error.message : String(error)}`)
+    } finally {
+      setIsModelLoading(false)
+    }
+  }
+
+  // Direct camera switch for iOS
+  const directCameraSwitch = async () => {
+    try {
+      setIsModelLoading(true)
+      setDebugInfo(`Attempting direct camera switch on iOS...`)
+
+      // Stop current webcam
+      if (webcamRef.current) {
+        webcamRef.current.stop()
+      }
+
+      // Cancel animation frame
+      if (requestRef.current) {
+        window.cancelAnimationFrame(requestRef.current)
+      }
+
+      // Toggle camera preference
+      const newIsFrontCamera = !isFrontCamera
+      setIsFrontCamera(newIsFrontCamera)
+
+      // Create new constraints
+      const constraints: MediaTrackConstraints = {
+        facingMode: newIsFrontCamera ? "user" : "environment",
+      }
+
+      setDebugInfo((prev) => `${prev}\nUsing facingMode: ${newIsFrontCamera ? "user" : "environment"}`)
+
+      // Initialize webcam with new constraints
+      webcamRef.current = new window.tmImage.Webcam(300, 300, true)
+      await webcamRef.current.setup(constraints)
+      await webcamRef.current.play()
+
+      // Append to DOM
+      if (webcamContainerRef.current) {
+        webcamContainerRef.current.innerHTML = ""
+        webcamContainerRef.current.appendChild(webcamRef.current.canvas)
+      }
+
+      // Restart animation loop
+      requestRef.current = window.requestAnimationFrame(loop)
+
+      setDebugInfo((prev) => `${prev}\nCamera switched successfully`)
+    } catch (error) {
+      console.error("Error during direct camera switch:", error)
+      setError(`Failed to switch camera: ${error instanceof Error ? error.message : String(error)}`)
+      setDebugInfo((prev) => `${prev}\nDirect switch error: ${error instanceof Error ? error.message : String(error)}`)
+
+      // Try to recover by reverting to previous camera
+      try {
+        setIsFrontCamera(!isFrontCamera) // Revert the change
+        await init() // Try to reinitialize with previous camera
+      } catch (recoveryError) {
+        console.error("Failed to recover from camera switch error:", recoveryError)
+      }
     } finally {
       setIsModelLoading(false)
     }
@@ -144,6 +268,12 @@ const AIModel = () => {
   const switchCamera = async () => {
     // Only allow switching if model is ready
     if (!isModelReady || isModelLoading) return
+
+    // For iOS, use direct camera switch method
+    if (isIOS()) {
+      await directCameraSwitch()
+      return
+    }
 
     try {
       setIsModelLoading(true)
@@ -172,8 +302,9 @@ const AIModel = () => {
 
   // Re-initialize when camera preference changes
   useEffect(() => {
-    if (isModelReady) {
+    if (isModelReady && !isIOS()) {
       // Re-initialize with new camera preference
+      // Skip for iOS as we handle it directly in the directCameraSwitch method
       init()
     }
   }, [isFrontCamera])
@@ -339,7 +470,7 @@ const AIModel = () => {
                     ) : (
                       <>
                         <FlipHorizontal className="mr-2 h-4 w-4" />
-                        Switch Camera
+                        Switch Camera ({isFrontCamera ? "Front" : "Rear"})
                       </>
                     )}
                   </Button>
@@ -407,6 +538,16 @@ const AIModel = () => {
                 Note: This model requires access to your camera. Make sure you've granted the necessary permissions.
               </p>
               <p className="mt-2">Only objects detected with 95% or higher confidence will be displayed.</p>
+
+              {/* Debug info - can be removed in production */}
+              {debugInfo && (
+                <details className="mt-4 text-xs">
+                  <summary className="cursor-pointer">Debug Info</summary>
+                  <pre className="mt-2 p-2 bg-muted rounded-md overflow-auto max-h-32 whitespace-pre-wrap">
+                    {debugInfo}
+                  </pre>
+                </details>
+              )}
             </div>
           </div>
         </div>
