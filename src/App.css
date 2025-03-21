@@ -7,7 +7,7 @@ body {
 /* 🌟 Fix Background Colors */
 .section-dark {
   background: linear-gradient(to bottom, #1e293b, #0f172a); /* Deep Blue Gradient */
-  color: #f8fafc; /* Light text for contrast */
+  color: #000101; /* Light text for contrast */
 }
 
 .section-light {
@@ -58,6 +58,34 @@ body {
   transition: color 0.3s;
 }
 .footer a:hover {
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
+/* 🌟 Chat Interface Styling */
+.chat-interface {
+  background: #1e293b; /* Deep Gray for consistency */
+  color: #f8fafc; /* Light text for readability */
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.chat-interface .message-box {
+  background: #0f172a; /* Deep Blue for contrast */
+  color: #f8fafc; /* Light text */
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.chat-interface .input-field {
+  background: #000000; /* Soft Gray for input field */
+  color: #1e293b; /* Dark text */
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid #000000;
+}
+
+.chat-interface .input-field::placeholder {
+  color: #000000; /* Placeholder text color */
+}

@@ -3,95 +3,66 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 🌟 General Layout Fixes */
+body {
+  background-color: #f8f9fa;
+  color: #1e293b;
+}
+
 /* 🌟 Hero Section */
 .hero-overlay {
-  background: linear-gradient(to bottom, rgba(185, 28, 28, 0.8), rgba(15, 23, 42, 0.9)); /* Daruma Red */
+  background: linear-gradient(to bottom, rgba(185, 28, 28, 0.8), rgba(15, 23, 42, 0.9));
 }
 
 /* 🌟 Feature Section */
 .features-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8;
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
 }
 
-/* 🌟 Fixing Feature Cards */
+@media (min-width: 640px) {
+  .features-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .features-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* 🌟 Feature Cards */
 .feature-card {
-  @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg p-6 flex flex-col items-center text-center transition-all;
+  background-color: white;
+  border-radius: 12px;
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.3s ease-in-out;
 }
+
+.feature-card:hover {
+  transform: translateY(-5px);
+}
+
 .feature-icon {
-  @apply w-16 h-16 flex items-center justify-center bg-red-200 text-red-600 rounded-full shadow-md mb-4;
-}
-.feature-title {
-  @apply text-xl font-semibold text-gray-800 dark:text-gray-200;
-}
-.feature-description {
-  @apply text-gray-600 dark:text-gray-400 text-sm;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fde8e8;
+  color: #b91c1c;
+  border-radius: 50%;
+  margin-bottom: 16px;
 }
 
-/* 🌟 Fixing Buttons */
+/* 🌟 Buttons */
 .btn-primary {
-  @apply px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-transform transform hover:scale-105;
+  padding: 12px 24px;
+  background: #b91c1c;
+  color: white;
+  font-weight: bold;
+  border-radius: 8px;
+  transition: all 0
 }
-.btn-outline {
-  @apply px-6 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all;
-}
-
-/* 🌟 Footer Section */
-.footer {
-  @apply bg-gray-900 text-gray-300 py-12 mt-12;
-}
-
-/* 🌟 Footer Container */
-.footer-container {
-  @apply max-w-7xl mx-auto px-6 md:px-12 lg:px-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left;
-}
-
-/* 🌟 Footer Logo & Description */
-.footer-logo {
-  @apply flex items-center space-x-3 text-white font-bold text-2xl;
-}
-.footer-logo img {
-  @apply w-8 h-8;
-}
-.footer-description {
-  @apply text-sm text-gray-400 mt-2;
-}
-
-/* 🌟 Footer Links */
-.footer-links {
-  @apply flex flex-col space-y-3 text-gray-400;
-}
-.footer-links a {
-  @apply hover:text-red-500 transition;
-}
-
-/* 🌟 Footer Social Icons */
-.footer-social {
-  @apply flex justify-center md:justify-start space-x-4 mt-4;
-}
-.footer-social a {
-  @apply w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full hover:bg-red-600 transition;
-}
-
-/* 🌟 Footer Copyright */
-.footer-bottom {
-  @apply text-center text-gray-500 text-sm mt-8 border-t border-gray-700 pt-6;
-}
-
-/* 🌟 Responsive Fixes */
-@media (max-width: 768px) {
-  .hero-title {
-    @apply text-3xl;
-  }
-  .hero-subtitle {
-    @apply text-lg;
-  }
-  .section {
-    @apply py-12;
-  }
-
-  .footer-container {
-    @apply grid-cols-1 text-center;
-  }
-} /* ✅ This closing bracket was missing */
-
- 
