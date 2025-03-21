@@ -54,6 +54,9 @@ const NavBar = () => {
             <Link to="/chatbot" className="text-foreground hover:text-primary transition-colors">
               Chatbot
             </Link>
+            <Link to="/ai-model" className="text-foreground hover:text-primary transition-colors">
+              AI Model
+            </Link>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -85,6 +88,13 @@ const NavBar = () => {
           >
             Chatbot
           </Link>
+          <Link
+            to="/ai-model"
+            className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
+            onClick={() => setIsOpen(false)}
+          >
+            AI Model
+          </Link>
         </div>
       </div>
     </header>
@@ -92,4 +102,3 @@ const NavBar = () => {
 }
 
 export default NavBar
-
