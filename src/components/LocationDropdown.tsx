@@ -42,44 +42,53 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
   // Request device orientation permission
   useEffect(() => {
     // Check if DeviceOrientationEvent is available
-    if (
-      typeof DeviceOrientationEvent !== "undefined" &&
-      typeof (DeviceOrientationEvent as any).requestPermission === "function"
-    ) {
-      // iOS 13+ requires permission
-      const requestPermission = async () => {
-        try {
-          const permission = await (DeviceOrientationEvent as any).requestPermission()
-          setPermissionState(permission)
-        } catch (error) {
-          console.error("Error requesting device orientation permission:", error)
-          setPermissionState("denied")
-        }
+    if (window.DeviceOrientationEvent) {
+      // For non-iOS devices, permission is typically granted by default
+      if (typeof (DeviceOrientationEvent as any).requestPermission !== "function") {
+        setPermissionState("granted")
+      } else {
+        // For iOS, we'll need to show a button to request permission
+        setPermissionState("prompt")
       }
-
-      requestPermission()
-    } else if (window.DeviceOrientationEvent) {
-      // Other browsers don't need permission
-      setPermissionState("granted")
     } else {
       // Device orientation not supported (common on laptops/desktops)
       setOrientationSupported(false)
     }
   }, [])
 
+  const requestOrientationPermission = async () => {
+    try {
+      // This is the iOS-specific API
+      if (typeof (DeviceOrientationEvent as any).requestPermission === "function") {
+        const permission = await (DeviceOrientationEvent as any).requestPermission()
+        setPermissionState(permission)
+
+        if (permission === "granted") {
+          // Re-initialize orientation detection
+          window.addEventListener("deviceorientation", handleOrientation)
+        }
+      }
+    } catch (error) {
+      console.error("Error requesting device orientation permission:", error)
+      setPermissionState("denied")
+      setOrientationSupported(false)
+    }
+  }
+
+  // Define the handleOrientation function outside useEffect so we can reuse it
+  const handleOrientation = (event: DeviceOrientationEvent) => {
+    // Check if we have the alpha value (compass direction)
+    if (event.alpha !== null) {
+      setHeading(event.alpha)
+    } else {
+      // Some devices don't provide alpha even though they support the event
+      setOrientationSupported(false)
+    }
+  }
+
   // Handle device orientation for compass heading
   useEffect(() => {
     if (permissionState !== "granted" || !orientationSupported) return
-
-    const handleOrientation = (event: DeviceOrientationEvent) => {
-      // Check if we have the alpha value (compass direction)
-      if (event.alpha !== null) {
-        setHeading(event.alpha)
-      } else {
-        // Some devices don't provide alpha even though they support the event
-        setOrientationSupported(false)
-      }
-    }
 
     window.addEventListener("deviceorientation", handleOrientation)
 
@@ -94,7 +103,7 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
       window.removeEventListener("deviceorientation", handleOrientation)
       clearTimeout(timeoutId)
     }
-  }, [permissionState, heading])
+  }, [permissionState, orientationSupported])
 
   useEffect(() => {
     if (!userLocation || landmarks.length === 0) return
@@ -226,6 +235,14 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
 
   return (
     <div className={cn("w-full mb-4", className)}>
+      {permissionState === "prompt" && (
+        <div className="mb-4 p-4 bg-primary/10 rounded-lg">
+          <p className="mb-2 text-sm">Compass functionality requires device orientation permission</p>
+          <Button size="sm" onClick={requestOrientationPermission} className="w-full">
+            Enable Compass
+          </Button>
+        </div>
+      )}
       {!orientationSupported && (
         <Alert className="mb-2">
           <AlertCircle className="h-4 w-4" />
@@ -324,4 +341,3 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
 }
 
 export default LocationDropdown
-
