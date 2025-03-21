@@ -70,8 +70,19 @@ function parseCSV(csvText: string): Record<string, string>[] {
  * Validate and convert raw CSV data to Landmark objects
  */
 export function convertToLandmarks(data: Record<string, string>[]): Landmark[] {
+  // If data is empty or invalid, return an empty array
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    console.warn("Invalid or empty CSV data provided to convertToLandmarks")
+    return []
+  }
+
   return data
     .filter((item) => {
+      // Validate that the item exists and is an object
+      if (!item || typeof item !== "object") {
+        return false
+      }
+
       // Validate that the item has all required fields
       const requiredFields = [
         "Number_in_place",

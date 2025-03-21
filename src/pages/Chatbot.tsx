@@ -16,8 +16,61 @@ const TRAVEL_API_KEY = "travel-agent-api-key-12345" // Replace with your actual 
 const TRAVEL_API_ENDPOINT = "https://api.yourtravelagent.com/v1/chat"
 
 // CSV file URL - use the Vercel Blob Storage URL as fallback
-const LANDMARKS_CSV_URL =
-  "public/data/landmarks.csv"
+const LANDMARKS_CSV_URL = "/data/landmarks.csv"
+
+// Add fallback landmarks data
+const FALLBACK_LANDMARKS: Landmark[] = [
+  {
+    Number_in_place: "1",
+    place_name_raw: "main_gate",
+    place_name_jp: "山門",
+    place_name_en: "Main Gate",
+    desc_jp: "勝尾寺の正門です。",
+    desc_en: "The main entrance gate to Katsuoji Temple.",
+    latitude: "34.8546",
+    longitude: "135.4286",
+  },
+  {
+    Number_in_place: "2",
+    place_name_raw: "main_hall",
+    place_name_jp: "本堂",
+    place_name_en: "Main Hall",
+    desc_jp: "勝尾寺の本堂です。",
+    desc_en: "The main hall of Katsuoji Temple where the principal image is enshrined.",
+    latitude: "34.8548",
+    longitude: "135.4288",
+  },
+  {
+    Number_in_place: "3",
+    place_name_raw: "daruma_hall",
+    place_name_jp: "達磨堂",
+    place_name_en: "Daruma Hall",
+    desc_jp: "勝尾寺の達磨堂です。多くの達磨人形が奉納されています。",
+    desc_en: "The Daruma Hall where thousands of Daruma dolls are dedicated for good fortune.",
+    latitude: "34.8550",
+    longitude: "135.4290",
+  },
+  {
+    Number_in_place: "4",
+    place_name_raw: "bell_tower",
+    place_name_jp: "鐘楼",
+    place_name_en: "Bell Tower",
+    desc_jp: "勝尾寺の鐘楼です。",
+    desc_en: "The bell tower of Katsuoji Temple.",
+    latitude: "34.8552",
+    longitude: "135.4292",
+  },
+  {
+    Number_in_place: "5",
+    place_name_raw: "pagoda",
+    place_name_jp: "五重塔",
+    place_name_en: "Five-storied Pagoda",
+    desc_jp: "勝尾寺の五重塔です。",
+    desc_en: "The five-storied pagoda of Katsuoji Temple.",
+    latitude: "34.8554",
+    longitude: "135.4294",
+  },
+]
 
 const ChatbotPage = () => {
   const [currentLocation, setCurrentLocation] = useState<GeolocationCoordinates | null>(null)
@@ -31,13 +84,30 @@ const ChatbotPage = () => {
     const loadLandmarks = async () => {
       try {
         setLoading(true)
-        const rawData = await fetchAndParseCSV(LANDMARKS_CSV_URL)
-        const landmarksData = convertToLandmarks(rawData)
-        setLandmarks(landmarksData)
+
+        try {
+          const rawData = await fetchAndParseCSV(LANDMARKS_CSV_URL)
+          const landmarksData = convertToLandmarks(rawData)
+
+          if (landmarksData && landmarksData.length > 0) {
+            setLandmarks(landmarksData)
+            setError(null)
+            return
+          }
+        } catch (fetchError) {
+          console.error("Error fetching CSV:", fetchError)
+          // Continue to fallback
+        }
+
+        // Use fallback data if fetch fails or returns empty data
+        console.log("Using fallback landmarks data")
+        setLandmarks(FALLBACK_LANDMARKS)
         setError(null)
       } catch (err) {
         console.error("Error loading landmarks:", err)
-        setError("Failed to load landmarks data. Please try again later.")
+        setError("Failed to load landmarks data. Using default landmarks.")
+        // Still use fallback data even if there's an error
+        setLandmarks(FALLBACK_LANDMARKS)
       } finally {
         setLoading(false)
       }

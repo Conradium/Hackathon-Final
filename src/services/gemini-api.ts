@@ -4,6 +4,7 @@
 // For production, always use environment variables
 const GEMINI_API_KEY = "AIzaSyCkfMEYWYlT0aR07OYH14RqpTGQ82KI9N0" // Replace with your actual API key
 
+
 import type { Landmark } from "@/components/LocationDropdown"
 
 export interface GeminiRequestOptions {
@@ -16,6 +17,7 @@ export interface GeminiRequestOptions {
   temperature?: number
 }
 
+// Update error handling in the Gemini API
 export async function generateGeminiResponse(options: GeminiRequestOptions): Promise<string> {
   try {
     // Find the nearest POI if not provided
@@ -40,41 +42,53 @@ export async function generateGeminiResponse(options: GeminiRequestOptions): Pro
 
     console.log("System prompt:", systemPrompt)
 
-    // Make the actual API call to Google Gemini
-    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-goog-api-key": GEMINI_API_KEY,
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            parts: [
+    try {
+      // Make the actual API call to Google Gemini
+      const response = await fetch(
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": GEMINI_API_KEY,
+          },
+          body: JSON.stringify({
+            contents: [
               {
-                text: systemPrompt,
-              },
-              {
-                text: options.prompt,
+                parts: [
+                  {
+                    text: systemPrompt,
+                  },
+                  {
+                    text: options.prompt,
+                  },
+                ],
               },
             ],
-          },
-        ],
-        generationConfig: {
-          temperature: options.temperature || 0.7,
-          maxOutputTokens: options.maxTokens || 800,
+            generationConfig: {
+              temperature: options.temperature || 0.7,
+              maxOutputTokens: options.maxTokens || 800,
+            },
+          }),
         },
-      }),
-    })
+      )
 
-    if (!response.ok) {
-      const errorData = await response.json()
-      console.error("Gemini API error:", errorData)
-      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`)
+      if (!response.ok) {
+        console.error("Gemini API error status:", response.status)
+        throw new Error(`Gemini API error: ${response.status} ${response.statusText}`)
+      }
+
+      const data = await response.json()
+      if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+        return data.candidates[0].content.parts[0].text
+      } else {
+        console.error("Unexpected Gemini API response format:", data)
+        throw new Error("Unexpected response format from Gemini API")
+      }
+    } catch (apiError) {
+      console.error("API call failed:", apiError)
+      throw apiError // Re-throw to be caught by the outer catch
     }
-
-    const data = await response.json()
-    return data.candidates[0].content.parts[0].text
   } catch (error) {
     console.error("Error generating response from Gemini:", error)
 
