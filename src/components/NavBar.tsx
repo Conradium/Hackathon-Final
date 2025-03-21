@@ -54,15 +54,6 @@ const NavBar = () => {
             <Link to="/chatbot" className="text-foreground hover:text-primary transition-colors">
               Chatbot
             </Link>
-            <a href="#features" className="text-foreground hover:text-primary transition-colors">
-              Features
-            </a>
-            <a href="#about" className="text-foreground hover:text-primary transition-colors">
-              How It Works
-            </a>
-            <a href="#contact" className="text-foreground hover:text-primary transition-colors">
-              Contact
-            </a>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -94,27 +85,6 @@ const NavBar = () => {
           >
             Chatbot
           </Link>
-          <a
-            href="#features"
-            className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            Features
-          </a>
-          <a
-            href="#about"
-            className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            How It Works
-          </a>
-          <a
-            href="#contact"
-            className="block px-3 py-2 rounded-md hover:bg-accent transition-colors"
-            onClick={() => setIsOpen(false)}
-          >
-            Contact
-          </a>
         </div>
       </div>
     </header>

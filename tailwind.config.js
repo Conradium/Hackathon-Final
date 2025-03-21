@@ -5,7 +5,7 @@ export default {
     extend: {
       colors: {
         primary: "#B91C1C", // Japan's Rising Sun Red
-        secondary: "#F5F5F5", // Soft White
+        secondary: "#b62020", // Soft White
         "text-dark": "#1F2937", // Dark Blue-Gray for readability
         "text-muted": "#6B7280",
       },

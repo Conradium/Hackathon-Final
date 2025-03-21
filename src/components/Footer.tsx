@@ -46,11 +46,9 @@ const Footer = () => {
           <div>
             <h3 className="text-lg font-semibold mb-4">Our Services</h3>
             <ul className="space-y-3">
-              <FooterLink href="#ai-assistant">AI Travel Agent</FooterLink>
-              <FooterLink href="#translation">Language Translation</FooterLink>
-              <FooterLink href="#navigation">Maps & Navigation</FooterLink>
-              <FooterLink href="#recommendations">Local Recommendations</FooterLink>
-              <FooterLink href="#support">24/7 Support</FooterLink>
+              <FooterLink href="#">AI Guide</FooterLink>
+              <FooterLink href="#">Language Translation</FooterLink>
+              <FooterLink href="#">Temple Navigation</FooterLink>
             </ul>
           </div>
 
@@ -60,15 +58,15 @@ const Footer = () => {
             <ul className="space-y-3">
               <li className="flex items-start">
                 <MapPin className="w-5 h-5 text-primary mr-3 mt-0.5" />
-                <span className="text-muted-foreground">123 Travel Street, City, Country</span>
+                <span className="text-muted-foreground">PLACEHOLDER</span>
               </li>
               <li className="flex items-center">
                 <Phone className="w-5 h-5 text-primary mr-3" />
-                <span className="text-muted-foreground">+1 (555) 123-4567</span>
+                <span className="text-muted-foreground">PLACEHOLDER</span>
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 text-primary mr-3" />
-                <span className="text-muted-foreground">info@katsuojimate.com</span>
+                <span className="text-muted-foreground">PLACEHOLDER@katsuojimate.com</span>
               </li>
             </ul>
           </div>

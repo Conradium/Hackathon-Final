@@ -3,7 +3,7 @@ const HowItWorksSection = () => {
     <section id="about" className="py-20 px-6 bg-secondary/50">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <div className="inline-flex items-center rounded-full px-4 py-1 mb-4 bg-white text-foreground text-sm scroll-reveal">
+          <div className="inline-flex items-center rounded-full px-4 py-1 mb-4 bg-secondary text-foreground text-sm scroll-reveal">
             <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
             How It Works
           </div>

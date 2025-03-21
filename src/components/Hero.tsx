@@ -22,10 +22,10 @@ const Hero = () => {
 
           {/* Title & Subtitle */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-            Your Intelligent <br /> Temple Companion
+            Your Intelligent <br /> Temple Guide
           </h1>
           <p className="text-xl md:text-2xl text-text-muted-foreground mb-10 max-w-3xl mx-auto">
-            Break language barriers, navigate with confidence, and experience Katsuōji Temple with our AI assistant.
+            Break language barriers, navigate with confidence, and experience Katsuōji Temple with our AI guide.
           </p>
 
           {/* ✅ CTA Buttons */}
