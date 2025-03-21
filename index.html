@@ -15,7 +15,7 @@
     <meta property="og:url" content="https://yourwebsite.com" />
 
     <!-- ✅ Favicon (Fixes 404 Error) -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" href="/favicon.ico" />
 
     <!-- ✅ Preconnect & Preload Fonts for Performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -23,12 +23,15 @@
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
+    <!-- ✅ Ensures Tailwind CSS Loads Correctly -->
+    <link rel="stylesheet" href="/src/styles/tailwind.css">
+
   </head>
 
-  <body>
+  <body class="bg-gradient-dark text-white dark:bg-black">
     <div id="root"></div>
 
-    <!-- ✅ Keep the GPT script, but ensure it does not block rendering -->
+    <!-- ✅ GPT Script (Async to prevent blocking) -->
     <script async src="https://cdn.gpteng.co/gptengineer.js" type="module"></script>
 
     <!-- ✅ Vite React App Entry -->

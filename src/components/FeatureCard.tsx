@@ -1,24 +1,21 @@
-
-import { LucideIcon } from 'lucide-react';
-
 interface FeatureCardProps {
-  icon: LucideIcon;
+  icon: React.ElementType;
   title: string;
   description: string;
-  delay?: number;
+  delay?: number; // ✅ Ensures delay is optional
 }
 
 const FeatureCard = ({ icon: Icon, title, description, delay = 0 }: FeatureCardProps) => {
   return (
     <div 
-      className="scroll-reveal feature-card rounded-2xl p-6 glass-card"
+      className="rounded-2xl p-8 bg-white border border-gray-200 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-2"
       style={{ transitionDelay: `${delay}ms` }}
     >
-      <div className="rounded-full bg-primary/10 w-14 h-14 flex items-center justify-center mb-5">
-        <Icon className="text-primary w-7 h-7" />
+      <div className="rounded-full bg-red-100 w-16 h-16 flex items-center justify-center mb-6">
+        <Icon className="text-red-500 w-8 h-8" />
       </div>
-      <h3 className="text-xl font-semibold mb-3">{title}</h3>
-      <p className="text-muted-foreground">{description}</p>
+      <h3 className="text-2xl font-semibold mb-4">{title}</h3>
+      <p className="text-gray-600">{description}</p>
     </div>
   );
 };

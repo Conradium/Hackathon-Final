@@ -1,64 +1,69 @@
+import { useState, useEffect } from "react";
+import { Languages, Navigation, MapPin, Phone, Globe, Clock } from "lucide-react";
+import FeatureCard from "@/components/FeatureCard"; // ✅ Now correctly imported
 
-import React from 'react';
-import FeatureCard from '@/components/FeatureCard';
-import { Bot, Languages, Map, MessageSquare, Navigation, Star } from 'lucide-react';
+const Features = () => {
+  const [animate, setAnimate] = useState(false);
 
-const FeaturesSection = () => {
+  useEffect(() => {
+    const handleScroll = () => {
+      const featureSection = document.getElementById("features");
+      if (featureSection) {
+        const rect = featureSection.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.75 && !animate) {
+          setAnimate(true);
+        }
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    handleScroll(); // ✅ Check on initial load
+
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [animate]); // ✅ Prevents multiple re-renders
+
+  // ✅ Fixed `features` Array (Now Includes `delay`)
+  const features = [
+    { icon: Languages, title: "Real-time Translation", description: "Instant AI translations in 100+ languages.", delay: 0 },
+    { icon: Navigation, title: "Smart Navigation", description: "Find your way with AI-guided directions.", delay: 100 },
+    { icon: MapPin, title: "Local Recommendations", description: "Discover hidden gems & authentic experiences.", delay: 200 },
+    { icon: Phone, title: "Emergency Assistance", description: "One-tap access to local emergency services.", delay: 300 },
+    { icon: Globe, title: "Cultural Guide", description: "Learn customs, etiquette & cultural insights.", delay: 400 },
+    { icon: Clock, title: "24/7 Travel Support", description: "Round-the-clock assistance for travel needs.", delay: 500 }
+  ];
+
   return (
-    <section id="features" className="py-20 px-6 bg-background">
-      <div className="max-w-7xl mx-auto">
-        <div className="text-center mb-16">
-          <div className="inline-flex items-center rounded-full px-4 py-1 mb-4 bg-secondary text-secondary-foreground text-sm scroll-reveal">
-            <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
-            What We Offer
-          </div>
-          <h2 className="text-3xl md:text-4xl font-bold mb-4 scroll-reveal">Revolutionizing Travel Experience</h2>
-          <p className="text-muted-foreground max-w-2xl mx-auto scroll-reveal">
-            Our AI-powered platform simplifies travel with intelligent features designed to enhance your journey.
+    <section id="features" className="py-20 bg-gray-100">
+      <div className="container mx-auto px-6">
+        <div className="text-center mb-12">
+          <h2 className="text-4xl font-bold mb-4">Powered by Advanced AI</h2>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+            Our AI travel assistant provides real-time support for all your needs.
           </p>
         </div>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <FeatureCard 
-            icon={Bot} 
-            title="AI Travel Agent" 
-            description="Our intelligent assistant provides personalized recommendations and solves travel problems in real-time."
-            delay={0}
-          />
-          <FeatureCard 
-            icon={Languages} 
-            title="Language Translation" 
-            description="Break language barriers with instant translation in over 100 languages, helping you communicate effortlessly."
-            delay={100}
-          />
-          <FeatureCard 
-            icon={Map} 
-            title="Interactive Maps" 
-            description="Explore new destinations with detailed, interactive maps featuring points of interest and local attractions."
-            delay={200}
-          />
-          <FeatureCard 
-            icon={Navigation} 
-            title="Smart Navigation" 
-            description="Get accurate directions and efficient routes to any destination, even when you're offline."
-            delay={300}
-          />
-          <FeatureCard 
-            icon={MessageSquare} 
-            title="Local Insights" 
-            description="Access insider tips and cultural information from locals to enhance your travel experience."
-            delay={400}
-          />
-          <FeatureCard 
-            icon={Star} 
-            title="Personalized Experience" 
-            description="Receive tailored recommendations based on your preferences and previous travel history."
-            delay={500}
-          />
+
+        {/* ✅ FIXED GRID STRUCTURE (No Duplicates & Aligned Properly) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {features.map((feature, index) => (
+            <div 
+              key={index} // ✅ Ensures unique elements
+              className={`opacity-0 transform transition-all duration-700 ${
+                animate ? "opacity-100 translate-y-0" : "translate-y-6"
+              }`}
+              style={{ transitionDelay: `${feature.delay}ms` }} // ✅ Staggered animation
+            >
+              <FeatureCard
+                icon={feature.icon}
+                title={feature.title}
+                description={feature.description}
+                delay={feature.delay} // ✅ Now properly passed
+              />
+            </div>
+          ))}
         </div>
       </div>
     </section>
   );
 };
 
-export default FeaturesSection;
+export default Features;

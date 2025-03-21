@@ -1,65 +1,97 @@
+/* 🌟 Import Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 🌟 Custom Animations */
-@layer utilities {
-  .fade-in {
-    animation: fadeIn 0.8s ease-in-out;
-  }\
-
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-
-  @keyframes fade-in-up {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .animate-fade-in-up {
-    animation: fade-in-up 0.6s ease-out both;
-  }
-
-  /* 🌟 Smooth hover effect */
-  .hover-scale {
-    transition: transform 0.3s ease-in-out;
-  }
-  .hover-scale:hover {
-    transform: scale(1.05);
-  }
-}
-
-/* 🌟 Background Overlay for Hero Image */
+/* 🌟 Hero Section */
 .hero-overlay {
-  background: linear-gradient(to bottom, rgba(25, 25, 25, 0.7), rgba(0, 0, 0, 0.9));
+  background: linear-gradient(to bottom, rgba(185, 28, 28, 0.8), rgba(15, 23, 42, 0.9)); /* Daruma Red */
 }
 
-/* 🌟 Professional Gradient Backgrounds */
-.bg-gradient-japan {
-  background: linear-gradient(to right, #b91c1c, #f97316);
+/* 🌟 Feature Section */
+.features-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8;
 }
 
-.bg-gradient-dark {
-  background: linear-gradient(to bottom, #1e293b, #0f172a);
+/* 🌟 Fixing Feature Cards */
+.feature-card {
+  @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-lg rounded-lg p-6 flex flex-col items-center text-center transition-all;
+}
+.feature-icon {
+  @apply w-16 h-16 flex items-center justify-center bg-red-200 text-red-600 rounded-full shadow-md mb-4;
+}
+.feature-title {
+  @apply text-xl font-semibold text-gray-800 dark:text-gray-200;
+}
+.feature-description {
+  @apply text-gray-600 dark:text-gray-400 text-sm;
 }
 
-/* 🌟 Button Styles */
+/* 🌟 Fixing Buttons */
 .btn-primary {
-  @apply px-6 py-3 font-bold text-white rounded-lg transition-all shadow-lg bg-red-600 hover:bg-red-700 hover:scale-105;
+  @apply px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg transition-transform transform hover:scale-105;
+}
+.btn-outline {
+  @apply px-6 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-all;
 }
 
-.btn-outline {
-  @apply px-6 py-3 font-bold text-red-600 border-2 border-red-600 rounded-lg transition-all hover:bg-red-600 hover:text-white hover:scale-105;
+/* 🌟 Footer Section */
+.footer {
+  @apply bg-gray-900 text-gray-300 py-12 mt-12;
 }
+
+/* 🌟 Footer Container */
+.footer-container {
+  @apply max-w-7xl mx-auto px-6 md:px-12 lg:px-20 grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left;
+}
+
+/* 🌟 Footer Logo & Description */
+.footer-logo {
+  @apply flex items-center space-x-3 text-white font-bold text-2xl;
+}
+.footer-logo img {
+  @apply w-8 h-8;
+}
+.footer-description {
+  @apply text-sm text-gray-400 mt-2;
+}
+
+/* 🌟 Footer Links */
+.footer-links {
+  @apply flex flex-col space-y-3 text-gray-400;
+}
+.footer-links a {
+  @apply hover:text-red-500 transition;
+}
+
+/* 🌟 Footer Social Icons */
+.footer-social {
+  @apply flex justify-center md:justify-start space-x-4 mt-4;
+}
+.footer-social a {
+  @apply w-8 h-8 flex items-center justify-center bg-gray-800 rounded-full hover:bg-red-600 transition;
+}
+
+/* 🌟 Footer Copyright */
+.footer-bottom {
+  @apply text-center text-gray-500 text-sm mt-8 border-t border-gray-700 pt-6;
+}
+
+/* 🌟 Responsive Fixes */
+@media (max-width: 768px) {
+  .hero-title {
+    @apply text-3xl;
+  }
+  .hero-subtitle {
+    @apply text-lg;
+  }
+  .section {
+    @apply py-12;
+  }
+
+  .footer-container {
+    @apply grid-cols-1 text-center;
+  }
+} /* ✅ This closing bracket was missing */
+
+ 
