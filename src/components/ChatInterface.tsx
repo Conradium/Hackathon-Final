@@ -328,13 +328,13 @@ const ChatInterface = ({
       </div>
 
       {/* Input Box */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t bg-background">
+      <form onSubmit={handleSendMessage} className="p-4 border-t bg-gray-900">
         <div className="flex gap-2">
           <Textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Ask me anything about your travels..."
-            className="min-h-[2.5rem] resize-none"
+            className="min-h-[2.5rem] resize-none, bg-gray-700"
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault()

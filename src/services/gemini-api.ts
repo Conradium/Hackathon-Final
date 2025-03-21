@@ -45,7 +45,7 @@ export async function generateGeminiResponse(options: GeminiRequestOptions): Pro
     try {
       // Make the actual API call to Google Gemini
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
         {
           method: "POST",
           headers: {
