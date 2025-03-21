@@ -79,6 +79,8 @@ const ChatbotPage = () => {
   const [error, setError] = useState<string | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
   const [nearestPOI, setNearestPOI] = useState<Landmark | null>(null)
+  const [nextPOI, setNextPOI] = useState<Landmark | null>(null)
+  const [visitedPOIs, setVisitedPOIs] = useState<Set<string>>(new Set())
 
   // Fetch landmarks data from CSV
   useEffect(() => {
@@ -91,7 +93,9 @@ const ChatbotPage = () => {
           const landmarksData = convertToLandmarks(rawData)
 
           if (landmarksData && landmarksData.length > 0) {
-            setLandmarks(landmarksData)
+            // Sort landmarks by Number_in_place
+            const sortedLandmarks = sortLandmarksByNumber(landmarksData)
+            setLandmarks(sortedLandmarks)
             setError(null)
             return
           }
@@ -117,6 +121,15 @@ const ChatbotPage = () => {
     loadLandmarks()
   }, [])
 
+  // Sort landmarks by Number_in_place
+  const sortLandmarksByNumber = (landmarks: Landmark[]): Landmark[] => {
+    return [...landmarks].sort((a, b) => {
+      const numA = Number.parseInt(a.Number_in_place) || Number.MAX_SAFE_INTEGER
+      const numB = Number.parseInt(b.Number_in_place) || Number.MAX_SAFE_INTEGER
+      return numA - numB
+    })
+  }
+
   // Get user's location
   useEffect(() => {
     if (navigator.geolocation) {
@@ -139,15 +152,21 @@ const ChatbotPage = () => {
       const nearest = findNearestLandmark(currentLocation, landmarks)
       setNearestPOI(nearest)
 
-      // If we couldn't find a nearest landmark, use the first one as fallback
-      if (!nearest && landmarks.length > 0) {
+      // Find the next POI in sequence
+      if (nearest) {
+        const next = findNextPOI(nearest, landmarks)
+        setNextPOI(next)
+      } else if (landmarks.length > 0) {
+        // If no nearest landmark found, use the first one as default
         setNearestPOI(landmarks[0])
+        setNextPOI(landmarks.length > 1 ? landmarks[1] : null)
       }
     } else if (landmarks.length > 0) {
       // If no location but we have landmarks, use the first one
       setNearestPOI(landmarks[0])
+      setNextPOI(landmarks.length > 1 ? landmarks[1] : null)
     }
-  }, [currentLocation, landmarks])
+  }, [currentLocation, landmarks, visitedPOIs])
 
   // Helper function to find the nearest landmark
   const findNearestLandmark = (userLocation: GeolocationCoordinates, landmarks: Landmark[]): Landmark | null => {
@@ -182,6 +201,30 @@ const ChatbotPage = () => {
     return nearestLandmark
   }
 
+  // Helper function to find the next POI in sequence
+  const findNextPOI = (currentPOI: Landmark, landmarks: Landmark[]): Landmark | null => {
+    // Parse the current POI's Number_in_place
+    const currentNumber = Number.parseInt(currentPOI.Number_in_place)
+
+    if (isNaN(currentNumber)) {
+      // If current POI doesn't have a valid number, return the first landmark
+      return landmarks[0]
+    }
+
+    // Find the next POI with a higher Number_in_place
+    const nextPOI = landmarks.find((landmark) => {
+      const landmarkNumber = Number.parseInt(landmark.Number_in_place)
+      return !isNaN(landmarkNumber) && landmarkNumber > currentNumber
+    })
+
+    // If no next POI found, loop back to the first one
+    if (!nextPOI && landmarks.length > 0) {
+      return landmarks[0]
+    }
+
+    return nextPOI || null
+  }
+
   // Handle location selection
   const handleLocationSelect = (locationName: string) => {
     setSelectedLocation(locationName)
@@ -193,6 +236,29 @@ const ChatbotPage = () => {
 
     if (selected) {
       setNearestPOI(selected)
+
+      // Find the next POI in sequence
+      const next = findNextPOI(selected, landmarks)
+      setNextPOI(next)
+    }
+  }
+
+  // Handle when a POI is reached
+  const handleReachedPOI = (poi: Landmark) => {
+    // Add to visited POIs
+    setVisitedPOIs((prev) => {
+      const newSet = new Set(prev)
+      newSet.add(poi.Number_in_place)
+      return newSet
+    })
+
+    // Update next POI
+    const next = findNextPOI(poi, landmarks)
+    setNextPOI(next)
+
+    // If we have a next POI, make it the new target
+    if (next) {
+      setNearestPOI(next)
     }
   }
 
@@ -212,7 +278,13 @@ const ChatbotPage = () => {
 
           <div className="flex justify-center flex-col">
             {/* Direction Indicator */}
-            <DirectionIndicator userLocation={currentLocation} nearestPOI={nearestPOI} />
+            <DirectionIndicator
+              userLocation={currentLocation}
+              nearestPOI={nearestPOI}
+              nextPOI={nextPOI}
+              allPOIs={landmarks}
+              onReachedPOI={handleReachedPOI}
+            />
 
             {/* Location dropdown */}
             <div className="mb-4">
