@@ -16,12 +16,13 @@ interface Message {
   content: string
   sender: "user" | "bot"
   timestamp: Date
-  type?: "text" | "location" | "translation"
+  type?: "text" | "location" | "translation" | "image"
   locationData?: {
     lat?: number
     lng?: number
     placeName?: string
   }
+  imageData?: string
 }
 
 // Update the interface to accept a function for setting the input value
@@ -32,6 +33,8 @@ interface ChatInterfaceProps {
   userLocation?: GeolocationCoordinates | null
   landmarks?: Landmark[]
   onSelectLocation?: (locationName: string) => void
+  capturedImage?: string
+  nearestLandmark?: Landmark
 }
 
 // Update the component to include suggested prompts and handle location selection
@@ -42,6 +45,8 @@ const ChatInterface = ({
   userLocation,
   landmarks,
   onSelectLocation,
+  capturedImage,
+  nearestLandmark,
 }: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
@@ -61,7 +66,7 @@ const ChatInterface = ({
     const welcomeMessage: Message = {
       id: "welcome",
       content:
-        "👋 Hello! I'm your AI temple guide. Ask me anything about Katsuoji Temple, its history, or nearby attractions!",
+        "👋 Hello! I'm your AI temple guide. Ask me anything about Katsuoji Temple, its history, or nearby attractions! You can also take photos and I'll analyze them for you.",
       sender: "bot",
       timestamp: new Date(),
       type: "text",
@@ -77,6 +82,63 @@ const ChatInterface = ({
       }
     }
   }, [onSelectLocation])
+
+  // Process captured image when it changes
+  useEffect(() => {
+    if (capturedImage && nearestLandmark) {
+      // Create a message for the captured image
+      const imageMessage: Message = {
+        id: Date.now().toString(),
+        content: "I've taken a photo. Can you tell me about what I'm seeing?",
+        sender: "user",
+        timestamp: new Date(),
+        type: "image",
+        imageData: capturedImage,
+      }
+
+      setMessages((prev) => [...prev, imageMessage])
+
+      // Automatically process the image
+      handleImageAnalysis(capturedImage, nearestLandmark)
+    }
+  }, [capturedImage, nearestLandmark])
+
+  const handleImageAnalysis = async (imageData: string, landmark: Landmark) => {
+    setIsLoading(true)
+
+    try {
+      // Generate response using Gemini API with image data
+      const response = await generateGeminiResponse({
+        prompt:
+          "What can you tell me about this image? I'm at Katsuoji Temple and want to know more about what I'm seeing.",
+        userLocation,
+        landmarks,
+        nearestPOI: landmark,
+        language: "",
+        imageData: imageData,
+      })
+
+      // Create bot response message
+      const botResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        content: response,
+        sender: "bot",
+        timestamp: new Date(),
+        type: "text",
+      }
+
+      setMessages((prev) => [...prev, botResponse])
+    } catch (error) {
+      console.error("Error processing image:", error)
+      toast({
+        title: "Image Analysis Error",
+        description: "Could not analyze the image. Please try again or ask a question instead.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -242,7 +304,20 @@ const ChatInterface = ({
             )}
           >
             <div>
-              <div className="mb-1">{message.content}</div>
+              {/* Image message */}
+              {message.type === "image" && message.imageData && (
+                <div className="mb-2">
+                  <img
+                    src={message.imageData || "/placeholder.svg"}
+                    alt="User captured"
+                    className="rounded-md max-h-48 mb-2"
+                  />
+                  <div className="mb-1">{message.content}</div>
+                </div>
+              )}
+
+              {/* Text message */}
+              {(!message.type || message.type === "text") && <div className="mb-1">{message.content}</div>}
 
               {/* Location-specific UI */}
               {message.type === "location" && (

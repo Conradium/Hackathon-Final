@@ -1,9 +1,9 @@
+
 // Google Gemini API integration
 
 // The API key will be provided as an environment variable or directly in the code
 // For production, always use environment variables
 const GEMINI_API_KEY = "AIzaSyCkfMEYWYlT0aR07OYH14RqpTGQ82KI9N0" // Replace with your actual API key
-
 
 import type { Landmark } from "@/components/LocationDropdown"
 
@@ -15,6 +15,7 @@ export interface GeminiRequestOptions {
   language?: string
   maxTokens?: number
   temperature?: number
+  imageData?: string // Add support for image data
 }
 
 // Update error handling in the Gemini API
@@ -37,13 +38,65 @@ export async function generateGeminiResponse(options: GeminiRequestOptions): Pro
       ? `${options.userLocation.latitude.toFixed(5)}, ${options.userLocation.longitude.toFixed(5)}`
       : "Unknown"
 
-    // Construct the system prompt
-    const systemPrompt = `You are Katsuoji Temple tour guide. You are guiding the visitor. Language: ${options.language || ""}, the user's location is ${userLocationStr}. Nearest POI: ${nearestPOI?.place_name_en || "Unknown"}, ${windDirection}. The next place is ${nextPlace?.place_name_en || "Unknown"}`
+    // Construct the system prompt with landmark description if available
+    let systemPrompt = `You are Katsuoji Temple tour guide. You are guiding the visitor. Language: ${options.language || ""}, the user's location is ${userLocationStr}. Nearest POI: ${nearestPOI?.place_name_en || "Unknown"}, ${windDirection}. The next place is ${nextPlace?.place_name_en || "Unknown"}.`
+
+    // Add landmark description if available
+    if (nearestPOI?.desc_en) {
+      systemPrompt += ` Information about the nearest landmark: ${nearestPOI.desc_en}`
+    }
+
+    // Add instruction to use internet if image is provided
+    if (options.imageData) {
+      systemPrompt += ` The user has provided an image. Please analyze the image and use your internet access to provide accurate information about what is shown in the image, especially if it relates to Katsuoji Temple or Japanese culture.`
+    }
 
     console.log("System prompt:", systemPrompt)
 
     try {
-      // Make the actual API call to Google Gemini
+      // Prepare the API request
+      const requestBody: any = {
+        contents: [
+          {
+            parts: [
+              {
+                text: systemPrompt,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: options.temperature || 0.7,
+          maxOutputTokens: options.maxTokens || 800,
+        },
+      }
+
+      // Add the user's prompt
+      requestBody.contents[0].parts.push({
+        text: options.prompt,
+      })
+
+      // Add image data if provided
+      if (options.imageData) {
+        // Extract base64 data from data URL
+        const base64Data = options.imageData.split(",")[1]
+
+        requestBody.contents[0].parts.push({
+          inline_data: {
+            mime_type: "image/jpeg",
+            data: base64Data,
+          },
+        })
+      }
+
+      // Enable internet access for Gemini
+      requestBody.tools = [
+        {
+          web_search: {},
+        },
+      ]
+
+      // Make the API call to Google Gemini with internet access
       const response = await fetch(
         "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
         {
@@ -52,24 +105,7 @@ export async function generateGeminiResponse(options: GeminiRequestOptions): Pro
             "Content-Type": "application/json",
             "x-goog-api-key": GEMINI_API_KEY,
           },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: systemPrompt,
-                  },
-                  {
-                    text: options.prompt,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: options.temperature || 0.7,
-              maxOutputTokens: options.maxTokens || 800,
-            },
-          }),
+          body: JSON.stringify(requestBody),
         },
       )
 
@@ -93,7 +129,9 @@ export async function generateGeminiResponse(options: GeminiRequestOptions): Pro
     console.error("Error generating response from Gemini:", error)
 
     // Fallback responses if the API call fails
-    if (options.prompt.toLowerCase().includes("history")) {
+    if (options.imageData) {
+      return "I couldn't analyze the image you provided. The image might show a part of Katsuoji Temple, which is famous for its Daruma dolls and beautiful scenery. If you have specific questions about what you're seeing, please ask and I'll try to help."
+    } else if (options.prompt.toLowerCase().includes("history")) {
       return "Katsuoji Temple, founded in 727 CE during the Nara period, is famous for its Daruma dolls and is known as the 'Winner's Temple'. It's located in Minoh, Osaka Prefecture, and is dedicated to Monju Bosatsu, the Buddhist deity of wisdom."
     } else if (options.prompt.toLowerCase().includes("daruma")) {
       return "The Daruma Hall (Daruma-dō) is located in the central area of the temple complex. From the main gate, follow the path uphill for about 200 meters, and you'll see it on your right. It houses thousands of Daruma dolls of various sizes."
