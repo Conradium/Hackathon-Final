@@ -104,7 +104,8 @@ const AIModel = () => {
       const maxPredictions = modelRef.current.getTotalClasses()
 
       // Setup webcam with the appropriate camera
-      const flip = true // Always flip for consistency in UI
+      // Only flip for front camera (selfie mode)
+      const flip = isFrontCamera
 
       // Create constraints for camera selection
       let constraints: MediaTrackConstraints = {}
@@ -116,7 +117,9 @@ const AIModel = () => {
           facingMode: isFrontCamera ? "user" : "environment",
         }
 
-        setDebugInfo(`Using iOS camera selection with facingMode: ${isFrontCamera ? "user" : "environment"}`)
+        setDebugInfo(
+          `Using iOS camera selection with facingMode: ${isFrontCamera ? "user" : "environment"}, flip: ${flip}`,
+        )
       }
       // For other devices with multiple cameras
       else if (devices.length > 1) {
@@ -130,7 +133,7 @@ const AIModel = () => {
         }
 
         setDebugInfo(
-          `Using deviceId selection: ${device.label || "Camera " + (deviceIndex + 1)} (${device.deviceId.substring(0, 8)}...)`,
+          `Using deviceId selection: ${device.label || "Camera " + (deviceIndex + 1)} (${device.deviceId.substring(0, 8)}...), flip: ${flip}`,
         )
       }
       // Fallback for single camera devices
@@ -140,13 +143,13 @@ const AIModel = () => {
           constraints = {
             deviceId: { exact: devices[0].deviceId },
           }
-          setDebugInfo(`Using single available camera: ${devices[0].label || "Camera 1"}`)
+          setDebugInfo(`Using single available camera: ${devices[0].label || "Camera 1"}, flip: ${flip}`)
         } else {
           // Last resort fallback
           constraints = {
             facingMode: isFrontCamera ? "user" : "environment",
           }
-          setDebugInfo(`Using fallback facingMode: ${isFrontCamera ? "user" : "environment"}`)
+          setDebugInfo(`Using fallback facingMode: ${isFrontCamera ? "user" : "environment"}, flip: ${flip}`)
         }
       }
 
@@ -230,10 +233,13 @@ const AIModel = () => {
         facingMode: newIsFrontCamera ? "user" : "environment",
       }
 
-      setDebugInfo((prev) => `${prev}\nUsing facingMode: ${newIsFrontCamera ? "user" : "environment"}`)
+      // Only flip for front camera
+      const flip = newIsFrontCamera
+
+      setDebugInfo((prev) => `${prev}\nUsing facingMode: ${newIsFrontCamera ? "user" : "environment"}, flip: ${flip}`)
 
       // Initialize webcam with new constraints
-      webcamRef.current = new window.tmImage.Webcam(300, 300, true)
+      webcamRef.current = new window.tmImage.Webcam(300, 300, flip)
       await webcamRef.current.setup(constraints)
       await webcamRef.current.play()
 
