@@ -1,5 +1,5 @@
-
-import { Globe, Mail, Phone, MapPin, Twitter, Facebook, Instagram } from 'lucide-react';
+import type React from "react"
+import { Mail, Phone, MapPin, Twitter, Facebook, Instagram } from "lucide-react"
 
 const Footer = () => {
   return (
@@ -9,8 +9,16 @@ const Footer = () => {
           {/* Company Information */}
           <div className="space-y-4">
             <div className="flex items-center gap-2 mb-4">
-              <Globe className="h-6 w-6 text-primary" />
-              <span className="text-xl font-display font-medium">TravelMate</span>
+              <img
+                src="/logo-placeholder.png"
+                alt="Katsuōji Mate Logo"
+                className="h-6 w-auto"
+                onError={(e) => {
+                  // Fallback if image doesn't exist yet
+                  e.currentTarget.src = "https://via.placeholder.com/24x24?text=Logo"
+                }}
+              />
+              <span className="text-xl font-display font-medium">Katsuōji Mate</span>
             </div>
             <p className="text-muted-foreground">
               Breaking language barriers and solving tourist problems with AI-powered assistance.
@@ -60,7 +68,7 @@ const Footer = () => {
               </li>
               <li className="flex items-center">
                 <Mail className="w-5 h-5 text-primary mr-3" />
-                <span className="text-muted-foreground">info@travelmate.com</span>
+                <span className="text-muted-foreground">info@katsuojimate.com</span>
               </li>
             </ul>
           </div>
@@ -71,31 +79,29 @@ const Footer = () => {
 
         {/* Copyright */}
         <div className="text-center text-muted-foreground text-sm">
-          <p>© {new Date().getFullYear()} TravelMate. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Katsuōji Mate. All rights reserved.</p>
         </div>
       </div>
     </footer>
-  );
-};
+  )
+}
 
-const FooterLink = ({ href, children }: { href: string, children: React.ReactNode }) => (
+const FooterLink = ({ href, children }: { href: string; children: React.ReactNode }) => (
   <li>
-    <a 
-      href={href} 
-      className="text-muted-foreground hover:text-foreground transition-colors"
-    >
+    <a href={href} className="text-muted-foreground hover:text-foreground transition-colors">
       {children}
     </a>
   </li>
-);
+)
 
 const SocialIcon = ({ icon: Icon }: { icon: typeof Twitter }) => (
-  <a 
-    href="#" 
+  <a
+    href="#"
     className="w-10 h-10 rounded-full bg-accent flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors duration-300"
   >
     <Icon className="w-5 h-5" />
   </a>
-);
+)
 
-export default Footer;
+export default Footer
+

@@ -1,18 +1,17 @@
-import React from "react";
-import { motion } from "framer-motion"; // ✅ Keep imports at the top
-import NavBar from "@/components/NavBar";
-import Hero from "@/components/Hero";
-import Footer from "@/components/Footer";
-import FeaturesSection from "@/components/sections/FeaturesSection";
-import HowItWorksSection from "@/components/sections/HowItWorksSection";
-import TopDestinations from "@/components/TopDestinations"; // ✅ Uses the correct component
-import Services from "@/components/Services"; // ✅ Import AI-powered Services Section
-import CTASection from "@/components/sections/CTASection";
-import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+"use client"
+import { motion } from "framer-motion" // ✅ Keep imports at the top
+import NavBar from "@/components/NavBar"
+import Hero from "@/components/Hero"
+import Footer from "@/components/Footer"
+import FeaturesSection from "@/components/sections/FeaturesSection"
+import HowItWorksSection from "@/components/sections/HowItWorksSection"
+import Services from "@/components/Services" // ✅ Import AI-powered Services Section
+import CTASection from "@/components/sections/CTASection"
+import { useScrollAnimation } from "@/hooks/useScrollAnimation"
 
 const Index = () => {
   // Use the custom hook for scroll animations
-  useScrollAnimation();
+  useScrollAnimation()
 
   return (
     <>
@@ -33,17 +32,12 @@ const Index = () => {
           transition={{ duration: 0.8 }}
         >
           <h1 className="text-5xl font-bold mb-4">Explore Japan with TravelMate</h1>
-          <p className="text-lg max-w-lg">
-            Your AI-powered travel assistant to discover the best places in Japan.
-          </p>
+          <p className="text-lg max-w-lg">Your AI-powered travel assistant to discover the best places in Japan.</p>
           <button className="mt-6 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-lg shadow-lg transition-transform transform hover:scale-105">
             Start Your Journey
           </button>
         </motion.div>
       </div>
-
-      {/* ✅ Replacing inline destinations with `TopDestinations.tsx` */}
-      <TopDestinations />
 
       {/* ✅ AI-Powered Travel Services Section */}
       <Services />
@@ -53,7 +47,8 @@ const Index = () => {
       <CTASection />
       <Footer />
     </>
-  );
-};
+  )
+}
 
-export default Index;
+export default Index
+

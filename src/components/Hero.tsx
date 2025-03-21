@@ -17,15 +17,15 @@ const Hero = () => {
           {/* AI Assistant Badge */}
           <div className="inline-flex items-center rounded-full px-4 py-1 mb-6 bg-secondary text-secondary-foreground text-sm shadow-md">
             <span className="flex h-2 w-2 rounded-full bg-primary mr-2"></span>
-            AI-Powered Travel Assistant
+            AI-Powered Temple Guide
           </div>
 
           {/* Title & Subtitle */}
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 tracking-tight">
-            Your Intelligent <br /> Travel Companion
+            Your Intelligent <br /> Temple Companion
           </h1>
           <p className="text-xl md:text-2xl text-text-muted-foreground mb-10 max-w-3xl mx-auto">
-            Break language barriers, navigate with confidence, and solve any travel problem instantly with our AI assistant.
+            Break language barriers, navigate with confidence, and experience Katsuōji Temple with our AI assistant.
           </p>
 
           {/* CTA Buttons */}
