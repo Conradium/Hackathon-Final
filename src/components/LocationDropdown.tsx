@@ -29,9 +29,10 @@ interface LocationDropdownProps {
   userLocation: GeolocationCoordinates | null
   landmarks: Landmark[]
   className?: string
+  onSelectLocation?: (locationName: string) => void
 }
 
-const LocationDropdown = ({ userLocation, landmarks, className }: LocationDropdownProps) => {
+const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation }: LocationDropdownProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const [sortedLandmarks, setSortedLandmarks] = useState<Landmark[]>([])
   const [heading, setHeading] = useState<number | null>(null)
@@ -208,16 +209,10 @@ const LocationDropdown = ({ userLocation, landmarks, className }: LocationDropdo
     }
   }
 
-  const openInMaps = (latitude: string, longitude: string) => {
-    const lat = Number.parseFloat(latitude)
-    const lng = Number.parseFloat(longitude)
-
-    if (isNaN(lat) || isNaN(lng)) {
-      console.error("Invalid coordinates:", latitude, longitude)
-      return
+  const selectLocation = (landmark: Landmark) => {
+    if (onSelectLocation) {
+      onSelectLocation(landmark.place_name_en || landmark.place_name_jp)
     }
-
-    window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, "_blank")
   }
 
   if (sortedLandmarks.length === 0) {
@@ -286,7 +281,7 @@ const LocationDropdown = ({ userLocation, landmarks, className }: LocationDropdo
                       <Button
                         variant="ghost"
                         className="w-full justify-between px-2 py-1 h-auto"
-                        onClick={() => openInMaps(landmark.latitude, landmark.longitude)}
+                        onClick={() => selectLocation(landmark)}
                       >
                         <div className="flex items-center">
                           <MapPin className="mr-2 h-4 w-4" />

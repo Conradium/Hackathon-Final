@@ -1,0 +1,52 @@
+Number_in_place,Toilet,Parking,place_name_raw,place_name_jp,place_name_en,desc_jp,desc_en,latitude,longitude
+23,,,Nikaido,二階堂,Nikaido,寺院の重要な儀式や宗教的な遺物を収めるための建物で、二階建ての構造を持ち、それぞれ異なる機能を果たす," A prominent structure within the temple complex, typically used for ceremonies and housing important religious artifacts. Its two-story design allows for different functions on each level.",34.8666495,135.4923309
+-,,,Hokora,祠,Hokora,寺院の境内にある小さな祠である可能性があるが、具体的な詳細は提供されていない。,"Likely a small shrine within the temple grounds, but specific details are not provided in the search results.",34.8665744,135.4914135
+-,T3,,お手洗（勝尾寺）,トイレ,Toilet,,,34.8663128,135.4913968
+24,,,多宝塔,多宝塔,Pagoda Taho,仏教の教えを象徴する二重塔であり、寺院の建築美を引き立てる。,"A two-storied pagoda symbolizing Buddhist teachings, adding to the architectural beauty of the temple grounds.",34.8661809,135.4919173
+10,,,明治中興記念碑,一願不動堂,Meiji Restoration Monument,勝尾寺にある明治維新記念碑で、日本の近代化と文化変遷を記念するために建てられた。寺院の歴史的重要性を示す,"Meiji Restoration Memorial Monument) at Katsuo-ji Temple is a monument commemorating the Meiji Restoration period, which was a significant time of modernization and cultural shifts in Japan. While specific details about this monument are not provided in the search results, it likely serves as a reminder of the temple's enduring importance through Japan's transition into the modern era. The presence of this monument at Katsuo-ji Temple highlights the temple's historical significance and its connection to broader Japanese history beyond its religious importance1.",34.8658382,135.4920653
+22,,,Fudodo,不動堂（護摩堂),Fudodo,勝尾寺にある明治維新記念碑で、日本の近代化と文化変遷を記念するために建てられた。寺院の歴史的重要性を示す," A hall housing the statue of Fudo Myoo, an important deity in Japanese Buddhism known for his fierce appearance and role as a protector.",34.8659249,135.4915497
+11,,,勝ちダルマ奉納棚,勝ちダルマ奉納棚,Kachi Daruma Offering Shelf,訪問者がダルマを奉納するための特別な場所。勝尾寺はこのダルマで特に有名である,"A special area where visitors can offer Daruma dolls, which are associated with goal-setting and good luck. Katsuoji is particularly famous for these dolls.",34.8657179,135.4919172
+-,,,勝尾寺のクスノキ,勝尾寺のクスノキ,Katsuoji Camphor tree,"寺院の境内にある巨大なクスノキ。日本文化では神聖な木とされることが多い。
+","A large, likely ancient camphor tree on the temple grounds. Such trees are often considered sacred in Japanese culture.",34.8658363,135.4914135
+18,,,Hondo,本堂,Hondo,寺院の中心的な建物で、主尊を安置する最も大きく華やかな構造物。,The central building of the temple complex where the primary object of worship is enshrined. It's typically the largest and most ornate structure in the temple.,34.8659238,135.4910813
+-,,,Katsuoji,勝尾寺,Katsuoji,727年創建の歴史ある仏教寺院で、大阪府箕面市に位置する。「勝運の寺」として知られ、ダルマと四季折々の美しい景色で有名。880年に清和天皇の病気回復を機に「勝尾寺」と改名された。,"Founded in 727 CE, Katsuoji is a historic Buddhist temple located in Minoh City, Osaka Prefecture. It's known as the ""Temple of Victory"" and is famous for its Daruma dolls and beautiful seasonal scenery. The temple's name was changed from ""Mirokoji"" to ""Katsuoji"" in 880 CE after Emperor Seiwa's recovery from illness.",34.8657752,135.491087
+21,,,納経所,給合受付所（納释所）,Nōkyōsho,巡礼者や訪問者が納経帳や掛け軸に御朱印を押してもらえる場所。,"Where pilgrims and visitors can get their books or scrolls stamped as proof of their visit, a common practice in Japanese temple tourism.",34.8658877,135.4913173
+20,,,Shorodo,鐘楼堂,Shorodo,寺の鐘を収める建物で、特定の時間や儀式で鳴らされる。,"A structure housing the temple's bell, which is rung at specific times or for certain ceremonies",34.8656358,135.4912898
+19,,,Reception,本堂前お授け所,Reception,訪問者を迎え、案内を行う場所で、寺院の情報を提供することもある,"An area for welcoming and orienting visitors, possibly providing information and guidance about the temple.",34.8656358,135.4911587
+12,,,手水鉢,手水鉢,Water basin,参拝前に手や口を清めるための水盤,A purification basin where visitors wash their hands and mouth before entering the temple grounds.,34.8655056,135.4914484
+16,,,Mizukakekannon,水掛け観音堂,Mizukakekannon,観音像に水をかけて祈願するための仏像。,A statue of Kannon (the bodhisattva of compassion) designed for visitors to pour water over as an act of devotion or for blessings.,34.8658583,135.4907681
+15,,,Kaizando,開山堂,Kaizando,寺の開祖を祀る堂で、開祖の像や肖像が安置されていることが多い,"A hall dedicated to the founder of the temple or its sect, often containing a statue or portrait of the founder",34.8658066,135.4907098
+14,,,Chinjudo,三社権現（鎮守堂）,Chinjudo,寺院を守護する神々を祀る堂。,A hall dedicated to the temple's protective deities.,34.8656842,135.4907608
+13,,,Sanpokojinja,三宝荒神堂,Sanpokojinja,福徳をもたらす三宝荒神を祀る神社。,A shrine dedicated to three deities associated with good fortune.,34.8654608,135.490739
+,,,Yakushido,薬師堂,Yakushido,医薬の仏である薬師如来を祀る堂。,"A hall housing a statue of Yakushi, the Buddha of healing and medicine.",34.8655111,135.4903957
+17,,,Daishido,大師堂,Daishido,偉大な仏教指導者や高僧を祀る堂。,A hall honoring great Buddhist teachers or masters.,34.8658916,135.4908593
+,,,Katsuō-ji Waterfall,勝尾寺人工滝,Katsuō-ji Waterfall,寺院の境内にある滝で、霊的な意味や自然の美しさがあると考えられる。,"A natural waterfall on the temple grounds, likely considered a place of spiritual significance or natural beauty.",34.8652455,135.4931799
+25,,,勝尾寺霊苑,勝尾寺霊苑,Katsuoji Temple Cemetery,巡礼者が納経帳に御朱印を受けることができる場所。,"The office where visitors can get their pilgrim's scrolls stamped and inscribed.
+
+",34.8654902,135.4937836
+8,,,知恵の環,知恵の環,Chie no wa (Ring of Wisdom),知恵や学問に関連する象徴的な構造物やオブジェ。,Possibly a symbolic structure or object related to gaining wisdom or knowledge.,34.8651849,135.4926467
+7,,,Benzaiten,弁財天社,Benzaiten,水、言葉、音楽、弁舌などの流れるものを司る女神・弁財天を祀る社。,"A shrine or statue dedicated to Benzaiten, the goddess of everything that flows, including water, words, speech, eloquence, and music.",34.8650451,135.4930145
+6,,,Okiyome Bridge,お清め橋,Okiyome Bridge,参拝者が渡ることで浄化の儀式を行う橋。,A bridge that visitors cross as part of a purification ritual.,34.8647526,135.4928306
+5,,,Sanmon,山門,Sanmon,寺院の正門で、秋の夜にはライトアップされ神秘的な雰囲気を醸し出す,"The main gate of the temple, which is illuminated during autumn evenings, creating a mystical atmosphere.",34.8645998,135.4929981
+,T2,,Toilet,トイレ,Toilet,,,34.8632256,135.4992687
+4,,,鯉のエサやり場,鯉のエサやり場,Koi feeding area,訪問者が鯉に餌を与えることができる池で、鯉は縁起の良い生き物とされる。,"A pond or area where visitors can feed koi fish, which are often considered auspicious in Japanese culture.
+",34.8649766,135.4932629
+3,,,コムニカチオショップ,無料休憩所,Communicatio Shop,寺院関連のお守りや地元の商品を販売する土産物店。,"A souvenir shop selling temple-related items, charms, and local products.",,
+-,,,美光園,美光園,Bikoen,特定の光の条件で特に美しく見える庭園。,"A  garden area, possibly with special lighting features or designed to be particularly beautiful in certain light conditions.",34.8646154,135.4935033
+1,,,Katsuō-ji Entrance,参拝入口,Katsuō-ji Entrance,寺院の正門・入り口。,The main entry point to the temple grounds.,34.8645023,135.4933813
+-,,,勅使門,勅使門,Chokushi-mon,かつて天皇の使者や高位の訪問者が通った特別な門。,A special gate historically used for imperial messengers or other high-ranking visitors,34.8643703,135.4932133
+-,,,お迎え地蔵様,お迎え地蔵様,Omukae jizo-sama,訪問者を迎える地蔵菩薩像で、旅人や子供を守護するとされる。,"A statue of Jizo, a bodhisattva who protects travelers and children, positioned to welcome visitors to the temple.",34.8643756,135.4930511
+26,,,Katsuoji,阪急ばすのりば,Katsuoji Bus Stop,"
+勝尾寺への交通手段として利用されるバス停",,34.8657752,135.491087
+-,,P1,Katsuoji Dai 1 Parking Lot,勝尾寺第1駐車場,Katsuoji Dai 1 Parking Lot,寺院を訪れる車のための主要な駐車場。,"The primary parking area for temple visitors, indicating that the temple receives a significant number of visitors by car.",34.8643194,135.4940867
+,,P2,Katsuoji Dai 2 Parking Lot,勝尾寺第2駐車場,Katsuoji Dai 2 Parking Lot,,,34.8647134,135.4919369
+27,,,寺務所,寺務所,Temple Office,勝尾寺の管理・運営を担当する事務所で、参拝者への案内や儀式の管理などを行う。,"The Temple Office at Katsuoji Temple is the administrative hub for the complex, handling tasks such as visitor information, event coordination, and maintenance of the temple grounds. It likely provides assistance with religious ceremonies, manages donations, and offers temple-related items for purchase. Located within the temple grounds, the office serves as a central point for inquiries and support, and can be contacted directly for more detailed information.",34.86470733,135.4922181
+28,,,宿坊 応頂閣,宿坊 応頂閣,Ochokaku Temple Lodgings,"箕面国定公園内にある宿泊施設を兼ねた修行道場。各種の集会やイベントに利用される。
+
+","Ochokaku at Katsuoji Temple is a modern training hall and lodging facility located in the Mino Quasi-national Park, offering a serene environment amidst nature. It provides various halls and meeting rooms suitable for events and gatherings, though specific details about traditional temple lodging experiences are not detailed in the available information.",34.8651948,135.4915835
+2,,,喫煙所,喫煙所,Smoking Area,,,34.8645492,135.4936231
+-,T1,,Toilet,トイレ,Toilet,,,34.8646952,135.49339
+-,T4,,Toilet,トイレ,Toilet,,,34.86470733,135.4922181
+9,,,"宝物館","宝物館",Treasure Hall,"宝物館（Homotsu-kan）は、勝尾寺の建物の一つとして言及されていますが、一般公開はされていません。これは、おそらく貴重な文化財、宗教的遺物、または1300年の歴史を持つ寺院に関連する歴史的な品々が収められていることを示しています。訪問者は直接宝物館に入ることはできませんが、広大な80,000平方メートルの境内にある本堂（Hondo）や豊臣秀頼によって再建された山門をはじめ、多くの重要な建築物を見学することができます。","The treasure hall, or Homotsu-kan, is mentioned as one of the buildings at Katsuoji Temple. However, it is not open to the public. This suggests that the treasure hall likely houses valuable artifacts, religious relics, or historical items related to the temple's 1300-year history. While visitors cannot access the treasure hall directly, they can still explore many other significant structures within the temple's vast 80,000 square meter grounds, including the main hall (Hon-do) and the temple gate, which were rebuilt by Hideyori Toyotomi.
+",34.8654303,135.4926393
+29,,,タクシーのりば,タクシーのりば,Taxi Stand,,,34.8643686,135.4926861

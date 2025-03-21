@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
+import { generateGeminiResponse } from "@/services/gemini-api"
+import type { Landmark } from "@/components/LocationDropdown"
 
 interface Message {
   id: string
@@ -22,13 +24,25 @@ interface Message {
   }
 }
 
+// Update the interface to accept a function for setting the input value
 interface ChatInterfaceProps {
   mapsApiKey?: string
   travelApiKey?: string
   travelApiEndpoint?: string
+  userLocation?: GeolocationCoordinates | null
+  landmarks?: Landmark[]
+  onSelectLocation?: (locationName: string) => void
 }
 
-const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInterfaceProps) => {
+// Update the component to include suggested prompts and handle location selection
+const ChatInterface = ({
+  mapsApiKey,
+  travelApiKey,
+  travelApiEndpoint,
+  userLocation,
+  landmarks,
+  onSelectLocation,
+}: ChatInterfaceProps) => {
   const [messages, setMessages] = useState<Message[]>([])
   const [inputValue, setInputValue] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -47,13 +61,22 @@ const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInte
     const welcomeMessage: Message = {
       id: "welcome",
       content:
-        "👋 Hello! I'm your AI travel assistant. Ask me anything about navigation, translations, or local recommendations!",
+        "👋 Hello! I'm your AI temple guide. Ask me anything about Katsuoji Temple, its history, or nearby attractions!",
       sender: "bot",
       timestamp: new Date(),
       type: "text",
     }
     setMessages([welcomeMessage])
   }, [])
+
+  // Make this function available to parent components
+  useEffect(() => {
+    if (onSelectLocation) {
+      onSelectLocation = (locationName: string) => {
+        setInputValue((prev) => `Tell me about ${locationName}`)
+      }
+    }
+  }, [onSelectLocation])
 
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault()
@@ -74,13 +97,44 @@ const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInte
     setIsLoading(true)
 
     try {
-      // Log the API configuration for debugging
-      console.log("Using Travel API:", travelApiEndpoint)
-      console.log("Using Maps API:", mapsApiKey)
+      // Find the nearest POI
+      let nearestPOI: Landmark | null = null
+      if (userLocation && landmarks && landmarks.length > 0) {
+        nearestPOI = landmarks.reduce(
+          (nearest, landmark) => {
+            if (!nearest) return landmark
 
-      // This is where you'd integrate with your API
-      // For now, let's simulate a response
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+            const landmarkLat = Number.parseFloat(landmark.latitude)
+            const landmarkLng = Number.parseFloat(landmark.longitude)
+            const nearestLat = Number.parseFloat(nearest.latitude)
+            const nearestLng = Number.parseFloat(nearest.longitude)
+
+            if (isNaN(landmarkLat) || isNaN(landmarkLng) || isNaN(nearestLat) || isNaN(nearestLng)) {
+              return nearest
+            }
+
+            const distToLandmark = Math.sqrt(
+              Math.pow(landmarkLat - userLocation.latitude, 2) + Math.pow(landmarkLng - userLocation.longitude, 2),
+            )
+
+            const distToNearest = Math.sqrt(
+              Math.pow(nearestLat - userLocation.latitude, 2) + Math.pow(nearestLng - userLocation.longitude, 2),
+            )
+
+            return distToLandmark < distToNearest ? landmark : nearest
+          },
+          null as Landmark | null,
+        )
+      }
+
+      // Generate response using Gemini API
+      const response = await generateGeminiResponse({
+        prompt: inputValue,
+        userLocation,
+        landmarks,
+        nearestPOI,
+        language: "", // Empty for now
+      })
 
       // Detect if the message is about location
       const isLocationRequest =
@@ -95,17 +149,17 @@ const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInte
 
       let botResponse: Message
 
-      if (isLocationRequest) {
-        // Sample location data (in a real app, this would come from geocoding)
+      if (isLocationRequest && nearestPOI) {
+        // Location data from the nearest POI
         const locationData = {
-          lat: 40.7128,
-          lng: -74.006,
-          placeName: "New York City",
+          lat: Number.parseFloat(nearestPOI.latitude),
+          lng: Number.parseFloat(nearestPOI.longitude),
+          placeName: nearestPOI.place_name_en || nearestPOI.place_name_jp,
         }
 
         botResponse = {
           id: (Date.now() + 1).toString(),
-          content: `I've found ${locationData.placeName} on the map. Would you like directions?`,
+          content: response,
           sender: "bot",
           timestamp: new Date(),
           type: "location",
@@ -114,7 +168,7 @@ const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInte
       } else if (isTranslationRequest) {
         botResponse = {
           id: (Date.now() + 1).toString(),
-          content: "Here's the translation of what you asked for.",
+          content: response,
           sender: "bot",
           timestamp: new Date(),
           type: "translation",
@@ -122,8 +176,7 @@ const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInte
       } else {
         botResponse = {
           id: (Date.now() + 1).toString(),
-          content:
-            "I'm your AI travel assistant. I can help with travel recommendations, language translation, and navigation. What would you like to know?",
+          content: response,
           sender: "bot",
           timestamp: new Date(),
           type: "text",
@@ -156,6 +209,10 @@ const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInte
     // Open Google Maps in a new tab
     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${locationData.lat},${locationData.lng}`
     window.open(mapUrl, "_blank")
+  }
+
+  const handleSuggestedPrompt = (prompt: string) => {
+    setInputValue(prompt)
   }
 
   return (
@@ -240,6 +297,34 @@ const ChatInterface = ({ mapsApiKey, travelApiKey, travelApiEndpoint }: ChatInte
             <span>AI is typing...</span>
           </div>
         )}
+      </div>
+
+      {/* Suggested Prompts */}
+      <div className="px-4 py-2 border-t flex flex-wrap gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={() => handleSuggestedPrompt("Explain the history of Katsuoji Temple")}
+        >
+          Explain the history of Katsuoji Temple
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={() => handleSuggestedPrompt("Where is the Daruma Hall?")}
+        >
+          Where is the Daruma Hall?
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs"
+          onClick={() => handleSuggestedPrompt("What is the next major festival?")}
+        >
+          What is the next major festival?
+        </Button>
       </div>
 
       {/* Input Box */}
