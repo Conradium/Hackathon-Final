@@ -8,14 +8,26 @@ const GEMINI_API_KEY = "AIzaSyCkfMEYWYlT0aR07OYH14RqpTGQ82KI9N0" // Replace with
 import type { Landmark } from "@/components/LocationDropdown"
 
 export interface GeminiRequestOptions {
-  prompt: string
-  userLocation?: GeolocationCoordinates | null
-  landmarks?: Landmark[]
-  nearestPOI?: Landmark | null
-  language?: string
-  maxTokens?: number
-  temperature?: number
+  prompt: string;
+  userLocation?: GeolocationCoordinates | null;
+  landmarks?: Landmark[];
+  nearestPOI?: Landmark | null;
+  language?: string;
+  maxTokens?: number;
+  temperature?: number;
+  image?: File | null; // Add image support
 }
+
+// Helper function to convert a File object to a base64 string
+async function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+    });
+}
+
 
 // Update error handling in the Gemini API
 export async function generateGeminiResponse(options: GeminiRequestOptions): Promise<string> {
@@ -38,43 +50,85 @@ export async function generateGeminiResponse(options: GeminiRequestOptions): Pro
       : "Unknown"
 
     // Construct the system prompt
-    const systemPrompt = `You are Katsuoji Temple tour guide. You are guiding the visitor. Language: ${options.language || ""}, the user's location is ${userLocationStr}. Nearest POI: ${nearestPOI?.place_name_en || "Unknown"}, ${windDirection}. The next place is ${nextPlace?.place_name_en || "Unknown"}`
+    const systemPrompt = `You are Katsuoji Temple tour guide. You are guiding the visitor. Please only present the answer, do not post your thinking flow. Adjust language if necessary. Language: ${options.language || ""}, the user's location is ${userLocationStr}. Nearest POI: ${nearestPOI?.place_name_en || "Unknown"}, ${windDirection}. The next place is ${nextPlace?.place_name_en || "Unknown"}`
 
     console.log("System prompt:", systemPrompt)
+
+    let requestBody: any;
+
+      if (options.image) {
+          // Image and text prompt
+          const base64Image = await fileToBase64(options.image);
+          const imageData = base64Image.split(",")[1]; // Remove data URL prefix
+
+          requestBody = {
+              contents: [
+                  {
+                      parts: [
+                          {
+                              text: systemPrompt,
+                          },
+                          {
+                              inline_data: {
+                                  mime_type: "image/jpeg", // Or image/png, depending on your image
+                                  data: imageData,
+                              },
+                          },
+                          {
+                              text: options.prompt,
+                          }
+
+                      ],
+                  },
+              ],
+                generationConfig: {
+                  temperature: options.temperature || 0.7,
+                  maxOutputTokens: options.maxTokens || 800,
+              },
+          };
+
+
+      } else {
+          // Text-only prompt
+          requestBody = {
+              contents: [
+                  {
+                      parts: [
+                          {
+                              text: systemPrompt,
+                          },
+                          {
+                              text: options.prompt,
+                          },
+                      ],
+                  },
+              ],
+              generationConfig: {
+                  temperature: options.temperature || 0.7,
+                  maxOutputTokens: options.maxTokens || 800,
+              },
+          };
+      }
+
+
 
     try {
       // Make the actual API call to Google Gemini
       const response = await fetch(
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
+        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent", // Use gemini-pro-vision for image input
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             "x-goog-api-key": GEMINI_API_KEY,
           },
-          body: JSON.stringify({
-            contents: [
-              {
-                parts: [
-                  {
-                    text: systemPrompt,
-                  },
-                  {
-                    text: options.prompt,
-                  },
-                ],
-              },
-            ],
-            generationConfig: {
-              temperature: options.temperature || 0.7,
-              maxOutputTokens: options.maxTokens || 800,
-            },
-          }),
+          body: JSON.stringify(requestBody),
         },
       )
 
       if (!response.ok) {
         console.error("Gemini API error status:", response.status)
+        console.error("Gemini API error response:", await response.text()); // Log the full response text
         throw new Error(`Gemini API error: ${response.status} ${response.statusText}`)
       }
 
@@ -193,4 +247,3 @@ function calculateWindDirection(userLocation: GeolocationCoordinates | null, nea
   const index = Math.round(bearing / 45)
   return directions[index]
 }
-

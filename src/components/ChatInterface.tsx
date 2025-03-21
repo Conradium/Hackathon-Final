@@ -3,13 +3,24 @@
 import type React from "react"
 
 import { useState, useRef, useEffect } from "react"
-import { SendIcon, MapPinIcon, Globe } from "lucide-react"
+import { SendIcon, MapPinIcon, Globe, PlusCircle, X, Camera } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/use-toast"
 import { generateGeminiResponse } from "@/services/gemini-api"
 import type { Landmark } from "@/components/LocationDropdown"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogClose
+} from "@/components/ui/dialog"
+
 
 interface Message {
   id: string
@@ -24,7 +35,6 @@ interface Message {
   }
 }
 
-// Update the interface to accept a function for setting the input value
 interface ChatInterfaceProps {
   mapsApiKey?: string
   travelApiKey?: string
@@ -34,7 +44,6 @@ interface ChatInterfaceProps {
   onSelectLocation?: (locationName: string) => void
 }
 
-// Update the component to include suggested prompts and handle location selection
 const ChatInterface = ({
   mapsApiKey,
   travelApiKey,
@@ -48,15 +57,19 @@ const ChatInterface = ({
   const [isLoading, setIsLoading] = useState(false)
   const chatContainerRef = useRef<HTMLDivElement>(null)
   const { toast } = useToast()
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-  // Auto-scroll to the bottom of chat when messages change
+
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight
     }
   }, [messages])
 
-  // Initialize with a welcome message
   useEffect(() => {
     const welcomeMessage: Message = {
       id: "welcome",
@@ -69,7 +82,91 @@ const ChatInterface = ({
     setMessages([welcomeMessage])
   }, [])
 
-  // Make this function available to parent components
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (err) {
+            console.error("Error accessing camera:", err);
+            toast({
+                title: "Camera Access Error",
+                description: "Could not access the camera. Please ensure permissions are granted.",
+                variant: "destructive",
+            });
+        }
+    };
+
+    const stopCamera = () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            const tracks = stream.getTracks();
+
+            tracks.forEach((track) => {
+                track.stop();
+            });
+
+            videoRef.current.srcObject = null;
+        }
+    };
+
+    const openCamera = () => {
+        setIsCameraModalOpen(true);
+        startCamera();
+    };
+
+    const closeCamera = () => {
+        setIsCameraModalOpen(false);
+        stopCamera();
+    }
+
+  const capturePhoto = () => {
+      if (videoRef.current) {
+          const canvas = document.createElement('canvas');
+          canvas.width = videoRef.current.videoWidth;
+          canvas.height = videoRef.current.videoHeight;
+          const ctx = canvas.getContext('2d');
+
+          if (ctx) {
+              ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob((blob) => {
+                  if (blob) {
+                      const file = new File([blob], "captured_photo.jpg", { type: 'image/jpeg' });
+                      setSelectedImage(file);
+
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                          setImagePreview(reader.result as string);
+                      }
+                      reader.readAsDataURL(file);
+                      closeCamera();
+                      setIsImageModalOpen(false);
+                  }
+              }, 'image/jpeg');
+          }
+      }
+  };
+
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (event.target.files && event.target.files.length > 0) {
+          const file = event.target.files[0];
+          setSelectedImage(file);
+
+          const reader = new FileReader();
+          reader.onloadend = () => {
+              setImagePreview(reader.result as string);
+          }
+          reader.readAsDataURL(file);
+          setIsImageModalOpen(false);
+      }
+  };
+
+  const removeImage = () => {
+    setSelectedImage(null);
+    setImagePreview(null);
+  };
+
   useEffect(() => {
     if (onSelectLocation) {
       onSelectLocation = (locationName: string) => {
@@ -78,26 +175,26 @@ const ChatInterface = ({
     }
   }, [onSelectLocation])
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault()
+const handleSendMessage = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
-    if (!inputValue.trim()) return
+    const userPrompt = selectedImage ? inputValue : inputValue;
 
-    // Add user message to the chat
+    if (!userPrompt.trim() && !selectedImage) return;
+
     const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      sender: "user",
-      timestamp: new Date(),
-      type: "text",
-    }
+        id: Date.now().toString(),
+        content: selectedImage ? `Image attached: ${inputValue}` : inputValue,
+        sender: "user",
+        timestamp: new Date(),
+        type: "text",
+    };
 
-    setMessages((prev) => [...prev, userMessage])
-    setInputValue("")
-    setIsLoading(true)
+    setMessages((prev) => [...prev, userMessage]);
+    setInputValue("");
+    setIsLoading(true);
 
     try {
-      // Find the nearest POI
       let nearestPOI: Landmark | null = null
       if (userLocation && landmarks && landmarks.length > 0) {
         nearestPOI = landmarks.reduce(
@@ -127,30 +224,27 @@ const ChatInterface = ({
         )
       }
 
-      // Generate response using Gemini API
-      const response = await generateGeminiResponse({
-        prompt: inputValue,
-        userLocation,
-        landmarks,
-        nearestPOI,
-        language: "", // Empty for now
-      })
+        const response = await generateGeminiResponse({
+            prompt: userPrompt,
+            userLocation,
+            landmarks,
+            nearestPOI,
+            language: "",
+            image: selectedImage,
+        });
 
-      // Detect if the message is about location
       const isLocationRequest =
         inputValue.toLowerCase().includes("where") ||
         inputValue.toLowerCase().includes("location") ||
         inputValue.toLowerCase().includes("map") ||
         inputValue.toLowerCase().includes("direction")
 
-      // Detect if the message is about translation
       const isTranslationRequest =
         inputValue.toLowerCase().includes("translate") || inputValue.toLowerCase().includes("language")
 
       let botResponse: Message
 
       if (isLocationRequest && nearestPOI) {
-        // Location data from the nearest POI
         const locationData = {
           lat: Number.parseFloat(nearestPOI.latitude),
           lng: Number.parseFloat(nearestPOI.longitude),
@@ -192,7 +286,9 @@ const ChatInterface = ({
         variant: "destructive",
       })
     } finally {
-      setIsLoading(false)
+          setIsLoading(false);
+        setSelectedImage(null);
+        setImagePreview(null);
     }
   }
 
@@ -206,7 +302,6 @@ const ChatInterface = ({
       return
     }
 
-    // Open Google Maps in a new tab
     const mapUrl = `https://www.google.com/maps/search/?api=1&query=${locationData.lat},${locationData.lng}`
     window.open(mapUrl, "_blank")
   }
@@ -217,21 +312,18 @@ const ChatInterface = ({
 
   return (
     <div className="flex flex-col h-[500px] rounded-xl border shadow-lg overflow-hidden glass-card">
-      {/* Chat Header */}
       <div className="p-4 border-b bg-primary/10 flex items-center">
         <img
           src="/logo-placeholder.png"
           alt="Katsuōji Mate Logo"
           className="h-6 w-auto mr-2"
           onError={(e) => {
-            // Fallback if image doesn't exist yet
             e.currentTarget.src = "https://via.placeholder.com/24x24?text=Logo"
           }}
         />
         <h3 className="font-semibold">Temple Assistant</h3>
       </div>
 
-      {/* Messages Container */}
       <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
         {messages.map((message) => (
           <div
@@ -244,7 +336,6 @@ const ChatInterface = ({
             <div>
               <div className="mb-1">{message.content}</div>
 
-              {/* Location-specific UI */}
               {message.type === "location" && (
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center text-xs">
@@ -262,7 +353,6 @@ const ChatInterface = ({
                 </div>
               )}
 
-              {/* Translation-specific UI */}
               {message.type === "translation" && (
                 <div className="mt-2 flex items-center justify-between">
                   <div className="flex items-center text-xs">
@@ -299,7 +389,6 @@ const ChatInterface = ({
         )}
       </div>
 
-      {/* Suggested Prompts */}
       <div className="px-4 py-2 border-t flex flex-wrap gap-2">
         <Button
           variant="outline"
@@ -327,9 +416,44 @@ const ChatInterface = ({
         </Button>
       </div>
 
-      {/* Input Box */}
       <form onSubmit={handleSendMessage} className="p-4 border-t bg-gray-900">
         <div className="flex gap-2">
+            <Dialog open={isCameraModalOpen} onOpenChange={setIsCameraModalOpen}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Take a photo</DialogTitle>
+                        <DialogDescription>
+                            Use your camera to capture a photo.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="flex items-center justify-center">
+                        <video ref={videoRef} autoPlay className="w-full h-auto" />
+                    </div>
+                    <DialogFooter className="sm:justify-start">
+                        <DialogClose asChild>
+                            <Button type="button" variant="secondary" onClick={closeCamera}>
+                                Cancel
+                            </Button>
+                        </DialogClose>
+                        <Button type="button" variant="default" onClick={capturePhoto}>Capture</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+                  {imagePreview && (
+                    <div className="relative">
+                        <img src={imagePreview} alt="Selected" className="w-20 h-20 object-cover rounded-md mr-2" />
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-0 right-0"
+                            onClick={removeImage}
+
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                  )}
+
           <Textarea
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
@@ -342,7 +466,39 @@ const ChatInterface = ({
               }
             }}
           />
-          <Button type="submit" size="icon" disabled={isLoading || !inputValue.trim()} className="shrink-0">
+
+            <Dialog open={isImageModalOpen} onOpenChange={setIsImageModalOpen}>
+                <DialogTrigger asChild>
+                    <Button type="button" size="icon" variant="secondary" className="shrink-0" onClick={() => setIsImageModalOpen(true)}>
+                        <PlusCircle className="h-5 w-5" />
+                    </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Add Image</DialogTitle>
+                    </DialogHeader>
+
+                    <Button variant="outline" className="w-full mb-2" onClick={openCamera}>
+                        <Camera className="mr-2 h-4 w-4" /> Use Camera
+                    </Button>
+
+                    <input
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageSelect}
+                        className="hidden"
+                        id="file-upload"
+                    />
+                    <label htmlFor="file-upload" className="cursor-pointer">
+                        <Button variant="outline" className="w-full" asChild>
+                            <span>Choose from Gallery</span>
+                        </Button>
+                    </label>
+
+                </DialogContent>
+            </Dialog>
+
+          <Button type="submit" size="icon" disabled={isLoading || (!inputValue.trim() && !selectedImage)} className="shrink-0">
             <SendIcon className="h-5 w-5" />
           </Button>
         </div>
@@ -352,4 +508,3 @@ const ChatInterface = ({
 }
 
 export default ChatInterface
-
