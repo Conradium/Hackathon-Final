@@ -358,16 +358,18 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
         </div>
       )}
 
-      <Button variant="outline" className="w-full justify-between" onClick={() => setIsOpen(!isOpen)}>
-        <div className="flex items-center">
-          <MapPin className="mr-2 h-4 w-4" />
-          <span className="mr-1">Nearest landmark:</span>
-          <span className="font-medium">{sortedLandmarks[0]?.place_name_en || sortedLandmarks[0]?.place_name_jp}</span>
-          <span className={cn("ml-2 text-sm", getDistanceClass(sortedLandmarks[0]?.distance))}>
+      <Button variant="outline" className="w-full justify-between text-sm" onClick={() => setIsOpen(!isOpen)}>
+        <div className="flex items-center overflow-hidden">
+          <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+          <span className="mr-1 whitespace-nowrap">Nearest:</span>
+          <span className="font-medium truncate max-w-[100px] sm:max-w-[200px]">
+            {sortedLandmarks[0]?.place_name_en || sortedLandmarks[0]?.place_name_jp}
+          </span>
+          <span className={cn("ml-2 text-xs whitespace-nowrap", getDistanceClass(sortedLandmarks[0]?.distance))}>
             ({getDistanceText(sortedLandmarks[0]?.distance)})
           </span>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center ml-1 flex-shrink-0">
           {heading !== null && sortedLandmarks[0]?.bearing !== undefined && (
             <span
               className={cn(
@@ -392,29 +394,29 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="w-full justify-between px-2 py-1 h-auto"
+                        className="w-full justify-between px-2 py-1 h-auto text-sm"
                         onClick={() => selectLocation(landmark)}
                       >
-                        <div className="flex items-center">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          <span className="text-left">
+                        <div className="flex items-center overflow-hidden">
+                          <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+                          <span className="text-left truncate max-w-[120px] sm:max-w-[200px]">
                             {landmark.place_name_en || landmark.place_name_jp}
                             {landmark.Toilet && <span className="ml-1 text-blue-500 text-xs">(🚻)</span>}
                             {landmark.Parking && <span className="ml-1 text-blue-500 text-xs">(🅿️)</span>}
                           </span>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center ml-1 flex-shrink-0">
                           {heading !== null && landmark.bearing !== undefined && (
                             <span
                               className={cn(
-                                "mr-2 text-xs",
+                                "mr-2 text-xs whitespace-nowrap",
                                 getDirectionColor(getRelativeDirection(landmark.bearing, heading)),
                               )}
                             >
                               {getRelativeDirection(landmark.bearing, heading)}
                             </span>
                           )}
-                          <span className={cn("text-sm", getDistanceClass(landmark.distance))}>
+                          <span className={cn("text-xs whitespace-nowrap", getDistanceClass(landmark.distance))}>
                             {getDistanceText(landmark.distance)}
                           </span>
                         </div>

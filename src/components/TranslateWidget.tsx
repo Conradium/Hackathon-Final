@@ -143,12 +143,12 @@ const TranslateWidget = () => {
             </span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
+        <DropdownMenuContent align="end" className="bg-black text-white border-gray-800">
           {languages.map((language) => (
             <DropdownMenuItem
               key={language.code}
               onClick={() => changeLanguage(language.code)}
-              className={currentLanguage === language.code ? "bg-muted" : ""}
+              className={currentLanguage === language.code ? "bg-gray-800" : ""}
             >
               {language.name}
             </DropdownMenuItem>
