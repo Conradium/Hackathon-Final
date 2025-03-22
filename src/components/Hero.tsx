@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom";
-import { Button } from "@/components/ui/button"; // ✅ Ensure Button component exists
+import { Link } from "react-router-dom"
+import { Button } from "@/components/ui/button"
+import ImageCarousel from "@/components/ImageCarousel"
 
 const Hero = () => {
   return (
@@ -31,39 +32,33 @@ const Hero = () => {
           {/* ✅ CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Link to="/chatbot">
-              <Button 
-                size="lg" 
-                className="px-8 py-6 text-lg rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 bg-yellow-500 text-black font-medium">
+              <Button
+                size="lg"
+                className="px-8 py-6 text-lg rounded-full shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 bg-yellow-500 text-black font-medium"
+              >
                 Try the Chatbot
               </Button>
             </Link>
             <a href="#features">
-              <Button 
-                variant="outline" 
-                size="lg" 
-                className="px-8 py-6 text-lg rounded-full border-2 border-white/80 text-white hover:bg-white/10 hover:border-white transition-all">
+              <Button
+                variant="outline"
+                size="lg"
+                className="px-8 py-6 text-lg rounded-full border-2 border-white/80 text-white hover:bg-white/10 hover:border-white transition-all"
+              >
                 Explore Features
               </Button>
             </a>
           </div>
 
-          {/* ✅ Hero Image with Frame */}
-          <div className="mt-20 flex justify-center">
-            <div className="relative max-w-md overflow-hidden rounded-3xl shadow-2xl border-4 border-white/20 transform hover:scale-[1.02] transition-all duration-500">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-400/20 via-transparent to-yellow-400/30"></div>
-              <img
-                src="/images/kyoto.jpg"
-                alt="Kyoto traditional street"
-                className="w-full h-auto object-cover"
-                onError={(e) => e.currentTarget.src = "/images/placeholder.jpg"} // ✅ Fallback for missing image
-              />
-            </div>
+          {/* Image Carousel */}
+          <div className="mt-20">
+            <ImageCarousel />
           </div>
         </div>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default Hero;
+export default Hero
 

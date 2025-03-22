@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import NavBar from "@/components/NavBar"
 import Footer from "@/components/Footer"
 import ChatInterface from "@/components/ChatInterface"
-import UserLocationMap from "@/components/UserLocationMap"
+import DirectionIndicator from "@/components/DirectionIndicator"
 import LocationDropdown, { type Landmark } from "@/components/LocationDropdown"
 import { fetchAndParseCSV, convertToLandmarks } from "@/utils/csv-parser"
 import { Loader } from "lucide-react"
@@ -78,6 +78,9 @@ const ChatbotPage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null)
+  const [nearestPOI, setNearestPOI] = useState<Landmark | null>(null)
+  const [nextPOI, setNextPOI] = useState<Landmark | null>(null)
+  const [visitedPOIs, setVisitedPOIs] = useState<Set<string>>(new Set())
 
   // Fetch landmarks data from CSV
   useEffect(() => {
@@ -90,7 +93,9 @@ const ChatbotPage = () => {
           const landmarksData = convertToLandmarks(rawData)
 
           if (landmarksData && landmarksData.length > 0) {
-            setLandmarks(landmarksData)
+            // Sort landmarks by Number_in_place
+            const sortedLandmarks = sortLandmarksByNumber(landmarksData)
+            setLandmarks(sortedLandmarks)
             setError(null)
             return
           }
@@ -116,6 +121,15 @@ const ChatbotPage = () => {
     loadLandmarks()
   }, [])
 
+  // Sort landmarks by Number_in_place
+  const sortLandmarksByNumber = (landmarks: Landmark[]): Landmark[] => {
+    return [...landmarks].sort((a, b) => {
+      const numA = Number.parseInt(a.Number_in_place) || Number.MAX_SAFE_INTEGER
+      const numB = Number.parseInt(b.Number_in_place) || Number.MAX_SAFE_INTEGER
+      return numA - numB
+    })
+  }
+
   // Get user's location
   useEffect(() => {
     if (navigator.geolocation) {
@@ -125,21 +139,127 @@ const ChatbotPage = () => {
         },
         (error) => {
           console.error("Error getting location:", error)
-          // We'll handle the error in the UserLocationMap component
+          // We'll handle the error in the DirectionIndicator component
         },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
       )
     }
   }, [])
 
-  // Handle CSV upload
-  const handleCsvUpload = (newLandmarks: Landmark[]) => {
-    setLandmarks(newLandmarks)
+  // Find nearest POI when user location or landmarks change
+  useEffect(() => {
+    if (currentLocation && landmarks.length > 0) {
+      const nearest = findNearestLandmark(currentLocation, landmarks)
+      setNearestPOI(nearest)
+
+      // Find the next POI in sequence
+      if (nearest) {
+        const next = findNextPOI(nearest, landmarks)
+        setNextPOI(next)
+      } else if (landmarks.length > 0) {
+        // If no nearest landmark found, use the first one as default
+        setNearestPOI(landmarks[0])
+        setNextPOI(landmarks.length > 1 ? landmarks[1] : null)
+      }
+    } else if (landmarks.length > 0) {
+      // If no location but we have landmarks, use the first one
+      setNearestPOI(landmarks[0])
+      setNextPOI(landmarks.length > 1 ? landmarks[1] : null)
+    }
+  }, [currentLocation, landmarks, visitedPOIs])
+
+  // Helper function to find the nearest landmark
+  const findNearestLandmark = (userLocation: GeolocationCoordinates, landmarks: Landmark[]): Landmark | null => {
+    if (!userLocation || landmarks.length === 0) return null
+
+    let nearestLandmark: Landmark | null = null
+    let shortestDistance = Number.POSITIVE_INFINITY
+
+    landmarks.forEach((landmark) => {
+      const landmarkLat = Number.parseFloat(landmark.latitude)
+      const landmarkLng = Number.parseFloat(landmark.longitude)
+
+      if (isNaN(landmarkLat) || isNaN(landmarkLng)) return
+
+      // Calculate distance using Haversine formula
+      const R = 6371e3 // Earth radius in meters
+      const φ1 = (userLocation.latitude * Math.PI) / 180
+      const φ2 = (landmarkLat * Math.PI) / 180
+      const Δφ = ((landmarkLat - userLocation.latitude) * Math.PI) / 180
+      const Δλ = ((landmarkLng - userLocation.longitude) * Math.PI) / 180
+
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2)
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+      const distance = R * c
+
+      if (distance < shortestDistance) {
+        shortestDistance = distance
+        nearestLandmark = landmark
+      }
+    })
+
+    return nearestLandmark
+  }
+
+  // Helper function to find the next POI in sequence
+  const findNextPOI = (currentPOI: Landmark, landmarks: Landmark[]): Landmark | null => {
+    // Parse the current POI's Number_in_place
+    const currentNumber = Number.parseInt(currentPOI.Number_in_place)
+
+    if (isNaN(currentNumber)) {
+      // If current POI doesn't have a valid number, return the first landmark
+      return landmarks[0]
+    }
+
+    // Find the next POI with a higher Number_in_place
+    const nextPOI = landmarks.find((landmark) => {
+      const landmarkNumber = Number.parseInt(landmark.Number_in_place)
+      return !isNaN(landmarkNumber) && landmarkNumber > currentNumber
+    })
+
+    // If no next POI found, loop back to the first one
+    if (!nextPOI && landmarks.length > 0) {
+      return landmarks[0]
+    }
+
+    return nextPOI || null
   }
 
   // Handle location selection
   const handleLocationSelect = (locationName: string) => {
     setSelectedLocation(locationName)
+
+    // Find the selected landmark
+    const selected = landmarks.find(
+      (landmark) => landmark.place_name_en === locationName || landmark.place_name_jp === locationName,
+    )
+
+    if (selected) {
+      setNearestPOI(selected)
+
+      // Find the next POI in sequence
+      const next = findNextPOI(selected, landmarks)
+      setNextPOI(next)
+    }
+  }
+
+  // Handle when a POI is reached
+  const handleReachedPOI = (poi: Landmark) => {
+    // Add to visited POIs
+    setVisitedPOIs((prev) => {
+      const newSet = new Set(prev)
+      newSet.add(poi.Number_in_place)
+      return newSet
+    })
+
+    // Update next POI
+    const next = findNextPOI(poi, landmarks)
+    setNextPOI(next)
+
+    // If we have a next POI, make it the new target
+    if (next) {
+      setNearestPOI(next)
+    }
   }
 
   return (
@@ -157,9 +277,14 @@ const ChatbotPage = () => {
           </div>
 
           <div className="flex justify-center flex-col">
-            {/* Google Map showing user's location */}
-            <UserLocationMap apiKey={GOOGLE_MAPS_API_KEY} height="400px" />
-
+            {/* Direction Indicator */}
+            <DirectionIndicator
+              userLocation={currentLocation}
+              nearestPOI={nearestPOI}
+              nextPOI={nextPOI}
+              allPOIs={landmarks}
+              onReachedPOI={handleReachedPOI}
+            />
 
             {/* Location dropdown */}
             <div className="mb-4">
@@ -188,7 +313,7 @@ const ChatbotPage = () => {
               travelApiEndpoint={TRAVEL_API_ENDPOINT}
               userLocation={currentLocation}
               landmarks={landmarks}
-              onSelectLocation={setSelectedLocation}
+              onSelectLocation={handleLocationSelect}
             />
           </div>
         </div>

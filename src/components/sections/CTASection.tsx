@@ -22,9 +22,6 @@ const CTASection = () => {
             <button className="px-8 py-3 rounded-full bg-primary text-primary-foreground font-medium shadow-lg hover:shadow-xl hover:bg-primary/90 transition-all text-base w-full sm:w-auto">
               Start Your Journey
             </button>
-            <button className="px-8 py-3 rounded-full bg-secondary text-secondary-foreground font-medium hover:bg-secondary/80 transition-all text-base w-full sm:w-auto">
-              Contact Support
-            </button>
           </div>
         </div>
       </div>

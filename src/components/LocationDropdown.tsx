@@ -8,6 +8,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 
+// Add TypeScript declaration for window.orientation
+declare global {
+  interface Window {
+    onwebkitcompassheading?: any
+  }
+}
+
 // Interface for landmark data from CSV
 export interface Landmark {
   Number_in_place: string
@@ -90,20 +97,103 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
   useEffect(() => {
     if (permissionState !== "granted" || !orientationSupported) return
 
+    let compassHeadingAvailable = false
+    let orientationInitialized = false
+
+    const handleOrientation = (event: DeviceOrientationEvent) => {
+      // Check if we have the alpha value (compass direction)
+      if (event.alpha !== null) {
+        // For iOS devices, alpha is the compass heading
+        setHeading(event.alpha)
+        compassHeadingAvailable = true
+        orientationInitialized = true
+      } else if (
+        // For some Android devices, we need to calculate the heading from beta and gamma
+        event.beta !== null &&
+        event.gamma !== null
+      ) {
+        try {
+          // Get device orientation using screen orientation if available
+          let orientationAngle = 0
+          if (window.screen && window.screen.orientation) {
+            orientationAngle = window.screen.orientation.angle
+          }
+
+          // Convert beta and gamma to heading
+          const beta = event.beta
+          const gamma = event.gamma
+
+          // Calculate heading based on device orientation
+          let heading = 0
+
+          if (orientationAngle === 0) {
+            heading = (Math.atan2(-gamma, beta) * 180) / Math.PI + 180
+          } else if (orientationAngle === 90) {
+            heading = (Math.atan2(beta, gamma) * 180) / Math.PI + 180
+          } else if (orientationAngle === -90 || orientationAngle === 270) {
+            heading = (Math.atan2(-beta, -gamma) * 180) / Math.PI + 180
+          } else if (orientationAngle === 180) {
+            heading = (Math.atan2(gamma, -beta) * 180) / Math.PI + 180
+          }
+
+          // Normalize heading to 0-360
+          heading = (heading + 360) % 360
+
+          setHeading(heading)
+          compassHeadingAvailable = true
+          orientationInitialized = true
+        } catch (error) {
+          console.error("Error calculating heading from beta/gamma:", error)
+        }
+      }
+    }
+
+    // For Android devices that support the WebKit implementation
+    const handleWebkitOrientation = (event: any) => {
+      if (event.webkitCompassHeading) {
+        // WebKit compass heading is measured clockwise from north, so we need to convert
+        const heading = 360 - event.webkitCompassHeading
+        setHeading(heading)
+        compassHeadingAvailable = true
+        orientationInitialized = true
+      }
+    }
+
+    // Add event listeners for both standard and webkit implementations
     window.addEventListener("deviceorientation", handleOrientation)
+    window.addEventListener("deviceorientationabsolute", handleOrientation)
+
+    // For older iOS/Safari versions
+    if ("onwebkitcompassheading" in window) {
+      window.addEventListener("webkitcompassheading", handleWebkitOrientation)
+    }
 
     // Set a timeout to check if we're getting orientation data
     const timeoutId = setTimeout(() => {
-      if (heading === null) {
+      if (!orientationInitialized) {
+        console.warn("Device orientation not providing heading data")
         setOrientationSupported(false)
       }
     }, 3000)
 
     return () => {
       window.removeEventListener("deviceorientation", handleOrientation)
+      window.removeEventListener("deviceorientationabsolute", handleOrientation)
+
+      if ("onwebkitcompassheading" in window) {
+        window.removeEventListener("webkitcompassheading", handleWebkitOrientation)
+      }
+
       clearTimeout(timeoutId)
     }
   }, [permissionState, orientationSupported])
+
+  // Add a fallback method for manual orientation
+  const handleManualOrientation = () => {
+    // Prompt user to point their device north and press a button
+    setOrientationSupported(true)
+    setHeading(0)
+  }
 
   useEffect(() => {
     if (!userLocation || landmarks.length === 0) return
@@ -247,7 +337,12 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
         <Alert className="mb-2">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Compass orientation is not available on your device. Direction information will not be shown.
+            <div className="flex flex-col gap-2">
+              <p>Compass orientation is not available on your device.</p>
+              <Button size="sm" onClick={handleManualOrientation} className="w-full">
+                Set North Manually
+              </Button>
+            </div>
           </AlertDescription>
         </Alert>
       )}
@@ -263,16 +358,18 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
         </div>
       )}
 
-      <Button variant="outline" className="w-full justify-between" onClick={() => setIsOpen(!isOpen)}>
-        <div className="flex items-center">
-          <MapPin className="mr-2 h-4 w-4" />
-          <span className="mr-1">Nearest landmark:</span>
-          <span className="font-medium">{sortedLandmarks[0]?.place_name_en || sortedLandmarks[0]?.place_name_jp}</span>
-          <span className={cn("ml-2 text-sm", getDistanceClass(sortedLandmarks[0]?.distance))}>
+      <Button variant="outline" className="w-full justify-between text-sm" onClick={() => setIsOpen(!isOpen)}>
+        <div className="flex items-center overflow-hidden">
+          <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+          <span className="mr-1 whitespace-nowrap">Nearest:</span>
+          <span className="font-medium truncate max-w-[100px] sm:max-w-[200px]">
+            {sortedLandmarks[0]?.place_name_en || sortedLandmarks[0]?.place_name_jp}
+          </span>
+          <span className={cn("ml-2 text-xs whitespace-nowrap", getDistanceClass(sortedLandmarks[0]?.distance))}>
             ({getDistanceText(sortedLandmarks[0]?.distance)})
           </span>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center ml-1 flex-shrink-0">
           {heading !== null && sortedLandmarks[0]?.bearing !== undefined && (
             <span
               className={cn(
@@ -297,29 +394,29 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
                     <TooltipTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="w-full justify-between px-2 py-1 h-auto"
+                        className="w-full justify-between px-2 py-1 h-auto text-sm"
                         onClick={() => selectLocation(landmark)}
                       >
-                        <div className="flex items-center">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          <span className="text-left">
+                        <div className="flex items-center overflow-hidden">
+                          <MapPin className="mr-2 h-4 w-4 flex-shrink-0" />
+                          <span className="text-left truncate max-w-[120px] sm:max-w-[200px]">
                             {landmark.place_name_en || landmark.place_name_jp}
                             {landmark.Toilet && <span className="ml-1 text-blue-500 text-xs">(🚻)</span>}
                             {landmark.Parking && <span className="ml-1 text-blue-500 text-xs">(🅿️)</span>}
                           </span>
                         </div>
-                        <div className="flex items-center">
+                        <div className="flex items-center ml-1 flex-shrink-0">
                           {heading !== null && landmark.bearing !== undefined && (
                             <span
                               className={cn(
-                                "mr-2 text-xs",
+                                "mr-2 text-xs whitespace-nowrap",
                                 getDirectionColor(getRelativeDirection(landmark.bearing, heading)),
                               )}
                             >
                               {getRelativeDirection(landmark.bearing, heading)}
                             </span>
                           )}
-                          <span className={cn("text-sm", getDistanceClass(landmark.distance))}>
+                          <span className={cn("text-xs whitespace-nowrap", getDistanceClass(landmark.distance))}>
                             {getDistanceText(landmark.distance)}
                           </span>
                         </div>
@@ -341,3 +438,4 @@ const LocationDropdown = ({ userLocation, landmarks, className, onSelectLocation
 }
 
 export default LocationDropdown
+
