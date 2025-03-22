@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react"
 import { Menu, X } from "lucide-react"
 import { Link } from "react-router-dom"
+import TranslateWidget from "./TranslateWidget"
 
 const NavBar = () => {
   const [isOpen, setIsOpen] = useState(false)
@@ -57,15 +58,19 @@ const NavBar = () => {
             <Link to="/ai-model" className="text-foreground hover:text-primary transition-colors">
               AI Model
             </Link>
+            <TranslateWidget />
           </nav>
 
           {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden rounded-md p-2 text-foreground hover:bg-accent focus:outline-none"
-          >
-            {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
+          <div className="md:hidden flex items-center space-x-4">
+            <TranslateWidget />
+            <button
+              onClick={() => setIsOpen(!isOpen)}
+              className="rounded-md p-2 text-foreground hover:bg-accent focus:outline-none"
+            >
+              {isOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -102,3 +107,4 @@ const NavBar = () => {
 }
 
 export default NavBar
+

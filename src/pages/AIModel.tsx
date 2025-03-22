@@ -4,10 +4,11 @@ import { useEffect, useRef, useState } from "react"
 import NavBar from "@/components/NavBar"
 import Footer from "@/components/Footer"
 import { Button } from "@/components/ui/button"
-import { Loader, Camera, FlipHorizontal } from "lucide-react"
+import { Loader, Camera, FlipHorizontal, Info } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
+import { generateGeminiResponse } from "@/services/gemini-api"
 
 // Define types for the Teachable Machine libraries
 declare global {
@@ -17,8 +18,11 @@ declare global {
   }
 }
 
-// Confidence threshold for displaying predictions (95%)
-const CONFIDENCE_THRESHOLD = 0.95
+// Confidence thresholds
+const CONFIDENCE_THRESHOLD = 0.95 // For displaying predictions (95%)
+const DESCRIPTION_FETCH_THRESHOLD = 0.9 // For fetching description (90%)
+const DESCRIPTION_DISPLAY_THRESHOLD = 0.5 // For keeping description visible (50%)
+const DESCRIPTION_HIDE_DELAY = 30000 // 30 seconds in milliseconds
 
 const AIModel = () => {
   const [isModelLoading, setIsModelLoading] = useState(false)
@@ -33,15 +37,35 @@ const AIModel = () => {
     probability: number
   } | null>(null)
   const [debugInfo, setDebugInfo] = useState<string>("")
-
+  const [description, setDescription] = useState<string>("")
+  const [isLoadingDescription, setIsLoadingDescription] = useState(false)
+  const [lastDescribedClass, setLastDescribedClass] = useState<string>("")
+  const [shouldShowDescription, setShouldShowDescription] = useState(false)
+  const [currentConfidence, setCurrentConfidence] = useState(0)
+  const [isAndroid, setIsAndroid] = useState(false)
+  const [switchingCamera, setSwitchingCamera] = useState(false)
+  
+  // Refs for timers and tracking
   const webcamContainerRef = useRef<HTMLDivElement>(null)
   const labelContainerRef = useRef<HTMLDivElement>(null)
   const modelRef = useRef<any>(null)
   const webcamRef = useRef<any>(null)
   const requestRef = useRef<number>()
+  const hideDescriptionTimerRef = useRef<NodeJS.Timeout | null>(null)
+  const lastFetchedClassRef = useRef<string>("")
 
   // The URL to the hosted model
   const MODEL_URL = "https://teachablemachine.withgoogle.com/models/0MNNF3JUK/"
+
+  // Detect device OS
+  useEffect(() => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isAndroidDevice = /android/.test(userAgent);
+    setIsAndroid(isAndroidDevice);
+    if (isAndroidDevice) {
+      setDebugInfo(prev => `${prev}\nDetected Android device`);
+    }
+  }, []);
 
   // Detect iOS device
   const isIOS = () => {
@@ -104,8 +128,8 @@ const AIModel = () => {
       const maxPredictions = modelRef.current.getTotalClasses()
 
       // Setup webcam with the appropriate camera
-      // Only flip for front camera (selfie mode)
-      const flip = isFrontCamera
+      // Only flip for front camera (selfie mode) and not on Android
+      const flip = isFrontCamera && !isAndroid
 
       // Create constraints for camera selection
       let constraints: MediaTrackConstraints = {}
@@ -159,21 +183,31 @@ const AIModel = () => {
         await webcamRef.current.setup(constraints) // Pass constraints here
         await webcamRef.current.play()
 
-        setDebugInfo((prev) => `${prev}\nCamera initialized successfully`)
+        setDebugInfo(
+          (prev) => `${prev}
+Camera initialized successfully, flip: ${flip}`,
+        )
       } catch (cameraError) {
         console.error("Camera setup error:", cameraError)
         setDebugInfo(
           (prev) =>
-            `${prev}\nCamera setup error: ${cameraError instanceof Error ? cameraError.message : String(cameraError)}`,
+            `${prev}
+Camera setup error: ${cameraError instanceof Error ? cameraError.message : String(cameraError)}`,
         )
 
         // Try again with simpler constraints as fallback
         try {
-          setDebugInfo((prev) => `${prev}\nTrying fallback camera initialization...`)
+          setDebugInfo(
+            (prev) => `${prev}
+Trying fallback camera initialization...`,
+          )
           webcamRef.current = new window.tmImage.Webcam(300, 300, flip)
           await webcamRef.current.setup({ facingMode: isFrontCamera ? "user" : "environment" })
           await webcamRef.current.play()
-          setDebugInfo((prev) => `${prev}\nFallback camera initialized successfully`)
+          setDebugInfo(
+            (prev) => `${prev}
+Fallback camera initialized successfully`,
+          )
         } catch (fallbackError) {
           throw new Error(
             `Failed to initialize camera: ${fallbackError instanceof Error ? fallbackError.message : String(fallbackError)}`,
@@ -202,17 +236,22 @@ const AIModel = () => {
     } catch (error) {
       console.error("Error initializing model:", error)
       setError(error instanceof Error ? error.message : "Failed to initialize model")
-      setDebugInfo((prev) => `${prev}\nInitialization error: ${error instanceof Error ? error.message : String(error)}`)
+      setDebugInfo(
+        (prev) => `${prev}
+Initialization error: ${error instanceof Error ? error.message : String(error)}`,
+      )
     } finally {
       setIsModelLoading(false)
+      setSwitchingCamera(false)
     }
   }
 
-  // Direct camera switch for iOS
+  // Direct camera switch for iOS and Android
   const directCameraSwitch = async () => {
     try {
       setIsModelLoading(true)
-      setDebugInfo(`Attempting direct camera switch on iOS...`)
+      setSwitchingCamera(true)
+      setDebugInfo(`Attempting direct camera switch on ${isIOS() ? 'iOS' : 'Android'}...`)
 
       // Stop current webcam
       if (webcamRef.current) {
@@ -233,10 +272,13 @@ const AIModel = () => {
         facingMode: newIsFrontCamera ? "user" : "environment",
       }
 
-      // Only flip for front camera
-      const flip = newIsFrontCamera
+      // Only flip for front camera and not on Android
+      const flip = newIsFrontCamera && !isAndroid
 
-      setDebugInfo((prev) => `${prev}\nUsing facingMode: ${newIsFrontCamera ? "user" : "environment"}, flip: ${flip}`)
+      setDebugInfo(
+        (prev) => `${prev}
+Using facingMode: ${newIsFrontCamera ? "user" : "environment"}, flip: ${flip}`,
+      )
 
       // Initialize webcam with new constraints
       webcamRef.current = new window.tmImage.Webcam(300, 300, flip)
@@ -252,11 +294,17 @@ const AIModel = () => {
       // Restart animation loop
       requestRef.current = window.requestAnimationFrame(loop)
 
-      setDebugInfo((prev) => `${prev}\nCamera switched successfully`)
+      setDebugInfo(
+        (prev) => `${prev}
+Camera switched successfully, new isFrontCamera: ${newIsFrontCamera}, flip: ${flip}`,
+      )
     } catch (error) {
       console.error("Error during direct camera switch:", error)
       setError(`Failed to switch camera: ${error instanceof Error ? error.message : String(error)}`)
-      setDebugInfo((prev) => `${prev}\nDirect switch error: ${error instanceof Error ? error.message : String(error)}`)
+      setDebugInfo(
+        (prev) => `${prev}
+Direct switch error: ${error instanceof Error ? error.message : String(error)}`,
+      )
 
       // Try to recover by reverting to previous camera
       try {
@@ -267,16 +315,19 @@ const AIModel = () => {
       }
     } finally {
       setIsModelLoading(false)
+      setSwitchingCamera(false)
     }
   }
 
   // Switch camera
   const switchCamera = async () => {
-    // Only allow switching if model is ready
-    if (!isModelReady || isModelLoading) return
+    // Only allow switching if model is ready and not already switching
+    if (!isModelReady || isModelLoading || switchingCamera) return
+    
+    setSwitchingCamera(true)
 
-    // For iOS, use direct camera switch method
-    if (isIOS()) {
+    // For iOS and Android, use direct camera switch method
+    if (isIOS() || isAndroid) {
       await directCameraSwitch()
       return
     }
@@ -303,14 +354,15 @@ const AIModel = () => {
       console.error("Error switching camera:", error)
       setError("Failed to switch camera. Please try again.")
       setIsModelLoading(false)
+      setSwitchingCamera(false)
     }
   }
 
   // Re-initialize when camera preference changes
   useEffect(() => {
-    if (isModelReady && !isIOS()) {
+    if (isModelReady && !isIOS() && !isAndroid) {
       // Re-initialize with new camera preference
-      // Skip for iOS as we handle it directly in the directCameraSwitch method
+      // Skip for iOS/Android as we handle it directly in the directCameraSwitch method
       init()
     }
   }, [isFrontCamera])
@@ -322,6 +374,64 @@ const AIModel = () => {
       requestRef.current = window.requestAnimationFrame(loop)
     }
   }
+
+  // Fetch description from Gemini API
+  const fetchDescription = async (className: string) => {
+    if (isLoadingDescription || className === lastFetchedClassRef.current) return
+
+    try {
+      setIsLoadingDescription(true)
+      lastFetchedClassRef.current = className
+      setLastDescribedClass(className)
+
+      const prompt = `Provide a brief description (2-3 sentences) of ${className}. Focus on what it is, what it's used for, and any interesting facts.`
+
+      const response = await generateGeminiResponse({
+        prompt,
+        maxTokens: 150,
+        temperature: 0.7,
+      })
+
+      setDescription(response)
+      setShouldShowDescription(true)
+      setDebugInfo((prev) => `${prev}\nFetched description for: ${className}`)
+    } catch (error) {
+      console.error("Error fetching description:", error)
+      setDescription("Could not fetch description. Please try again.")
+      setDebugInfo(
+        (prev) => `${prev}\nError fetching description: ${error instanceof Error ? error.message : String(error)}`,
+      )
+    } finally {
+      setIsLoadingDescription(false)
+    }
+  }
+
+  // Handle description visibility based on confidence
+  useEffect(() => {
+    // Clear any existing timer
+    if (hideDescriptionTimerRef.current) {
+      clearTimeout(hideDescriptionTimerRef.current)
+      hideDescriptionTimerRef.current = null
+    }
+
+    // If confidence drops below threshold, start timer to hide description
+    if (currentConfidence < DESCRIPTION_DISPLAY_THRESHOLD && shouldShowDescription) {
+      setDebugInfo(
+        (prev) => `${prev}\nConfidence dropped below ${DESCRIPTION_DISPLAY_THRESHOLD * 100}%, starting 30s timer`,
+      )
+
+      hideDescriptionTimerRef.current = setTimeout(() => {
+        setShouldShowDescription(false)
+        setDebugInfo((prev) => `${prev}\nHiding description after 30s timeout`)
+      }, DESCRIPTION_HIDE_DELAY)
+    }
+
+    return () => {
+      if (hideDescriptionTimerRef.current) {
+        clearTimeout(hideDescriptionTimerRef.current)
+      }
+    }
+  }, [currentConfidence, shouldShowDescription])
 
   const predict = async () => {
     if (!modelRef.current || !webcamRef.current || !labelContainerRef.current) return
@@ -340,9 +450,28 @@ const AIModel = () => {
         { className: "", probability: 0 },
       )
 
+      // Update current confidence
+      setCurrentConfidence(highestConfidence.probability)
+
       // Only set high confidence prediction if it meets the threshold
       if (highestConfidence.probability >= CONFIDENCE_THRESHOLD) {
         setHighConfidencePrediction(highestConfidence)
+
+        // If confidence is above description fetch threshold and we haven't fetched for this class yet
+        if (
+          highestConfidence.probability >= DESCRIPTION_FETCH_THRESHOLD &&
+          highestConfidence.className !== lastFetchedClassRef.current
+        ) {
+          fetchDescription(highestConfidence.className)
+        }
+
+        // If confidence is above display threshold, ensure description is shown
+        if (
+          highestConfidence.probability >= DESCRIPTION_DISPLAY_THRESHOLD &&
+          highestConfidence.className === lastDescribedClass
+        ) {
+          setShouldShowDescription(true)
+        }
       } else {
         setHighConfidencePrediction(null)
       }
@@ -412,6 +541,9 @@ const AIModel = () => {
       if (webcamRef.current) {
         webcamRef.current.stop()
       }
+      if (hideDescriptionTimerRef.current) {
+        clearTimeout(hideDescriptionTimerRef.current)
+      }
     }
   }, [])
 
@@ -468,10 +600,10 @@ const AIModel = () => {
                     variant="outline"
                     size="sm"
                     onClick={switchCamera}
-                    disabled={isModelLoading}
+                    disabled={isModelLoading || switchingCamera}
                     className="flex-shrink-0"
                   >
-                    {isModelLoading ? (
+                    {isModelLoading || switchingCamera ? (
                       <Loader className="h-4 w-4 animate-spin" />
                     ) : (
                       <>
@@ -536,6 +668,26 @@ const AIModel = () => {
               )}
             </div>
 
+            {/* Description Panel */}
+            {shouldShowDescription && description && (
+              <div className="mt-4 p-4 bg-secondary/20 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <Info className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-medium mb-1">About {lastDescribedClass}</h3>
+                    {isLoadingDescription ? (
+                      <div className="flex items-center gap-2">
+                        <Loader className="h-4 w-4 animate-spin" />
+                        <span className="text-sm text-muted-foreground">Loading description...</span>
+                      </div>
+                    ) : (
+                      <p className="text-sm">{description}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Hidden label container for compatibility */}
             <div ref={labelContainerRef} className="hidden"></div>
 
@@ -544,13 +696,14 @@ const AIModel = () => {
                 Note: This model requires access to your camera. Make sure you've granted the necessary permissions.
               </p>
               <p className="mt-2">Only objects detected with 95% or higher confidence will be displayed.</p>
+              <p className="mt-1">Information about objects will appear when they're detected with high confidence.</p>
 
               {/* Debug info - can be removed in production */}
               {debugInfo && (
                 <details className="mt-4 text-xs">
                   <summary className="cursor-pointer">Debug Info</summary>
                   <pre className="mt-2 p-2 bg-muted rounded-md overflow-auto max-h-32 whitespace-pre-wrap">
-                    {debugInfo}
+                    {`Device: ${isAndroid ? 'Android' : isIOS() ? 'iOS' : 'Other'}\n${debugInfo}`}
                   </pre>
                 </details>
               )}
